@@ -1,0 +1,61 @@
+name: Create Patch Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Create GitHub App Token
+        uses: actions/create-github-app-token@v2
+        id: github-app-token
+        with:
+          app-id: ${{ vars.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+
+      - name: Checkout source
+        uses: actions/checkout@v5
+        with:
+          token: ${{ steps.github-app-token.outputs.token }}
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+
+      - name: Run TypeScript compiler check
+        run: |
+          echo -e '/// <reference types="next" />\n/// <reference types="next/image-types/global" />' > next-env.d.ts
+          npm run typecheck
+
+      - name: Bump version
+        run: |
+          git config --global --add safe.directory /harness
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "github-actions"
+
+          ./tools/create_release.sh patch
+        env:
+          GITHUB_TOKEN: ${{ steps.github-app-token.outputs.token }}
+
+      - name: Sync prod branch with main for deployment
+        run: |
+          git fetch origin
+          git checkout prod
+          git merge origin/main
+          git push origin prod
+        env:
+          GITHUB_TOKEN: ${{ steps.github-app-token.outputs.token }}
