@@ -1,0 +1,71 @@
+version: '3'
+
+vars:
+  # Database variables
+  DB_HOST: "localhost"
+  DB_PORT: "5432"
+  DB_USER: "local"
+  DB_PASSWORD: "local"
+  DB_NAME_LOCAL: "serviceplatformtpl"
+  DB_NAME_TEST: "serviceplatformtpltest"
+  DSN_LOCAL: "postgresql://{{.DB_USER}}:{{.DB_PASSWORD}}@{{.DB_HOST}}:{{.DB_PORT}}/{{.DB_NAME_LOCAL}}?sslmode=disable"
+  DSN_TEST: "postgresql://{{.DB_USER}}:{{.DB_PASSWORD}}@{{.DB_HOST}}:{{.DB_PORT}}/{{.DB_NAME_TEST}}?sslmode=disable"
+  FLYWAY_URL_LOCAL: "jdbc:postgresql://{{.DB_HOST}}:{{.DB_PORT}}/{{.DB_NAME_LOCAL}}"
+  FLYWAY_URL_TEST: "jdbc:postgresql://{{.DB_HOST}}:{{.DB_PORT}}/{{.DB_NAME_TEST}}"
+
+tasks:
+  fmt:
+    summary: Format Go code
+    cmds:
+      - go fmt ./...
+
+  run:
+    summary: Run the Go application
+    cmds:
+      - go run app/cmd/api/main.go
+
+  up-infra:
+    summary: Start infrastructure services using Docker Compose
+    cmds:
+      - docker compose -f docker-compose.infra.yml up -d
+
+  down-infra:
+    summary: Stop infrastructure services using Docker Compose
+    cmds:
+      - docker compose -f docker-compose.infra.yml down
+
+  migrate:
+    summary: Run database migrations
+    dir: sql
+    cmds:
+      - flyway migrate -user={{.DB_USER}} -password={{.DB_PASSWORD}} -url={{.FLYWAY_URL_LOCAL}}
+
+  clean-migrate:
+    summary: Clean and run database migrations for local database
+    dir: sql
+    cmds:
+      - flyway clean migrate -user={{.DB_USER}} -password={{.DB_PASSWORD}} -url={{.FLYWAY_URL_LOCAL}}
+
+  migrate-test:
+    summary: Run database migrations for test database
+    dir: sql
+    cmds:
+      - flyway migrate -user={{.DB_USER}} -password={{.DB_PASSWORD}} -url={{.FLYWAY_URL_TEST}}
+
+  clean-migrate-test:
+    summary: Clean and run database migrations for test database
+    dir: sql
+    cmds:
+      - flyway clean migrate -user={{.DB_USER}} -password={{.DB_PASSWORD}} -url={{.FLYWAY_URL_TEST}}
+
+  integration-tests:
+    summary: Run integration tests
+    env:
+      APP_ENV: test
+      INTEGRATION_TEST: true
+    cmds:
+      - go test -v ./app/test/integration/... -count=1 && echo "Integration tests passed"
+  mockery:
+    summary: Generate mocks using mockery
+    cmds:
+      - mockery --config .mockery.yml

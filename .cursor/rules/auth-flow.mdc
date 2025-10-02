@@ -1,0 +1,31 @@
+Auth Flow (SIWE + JWT)
+
+- Nonce endpoint: POST /api/v1/auth/nonce
+  - Generates UUID nonce, stores in Redis at key `siwe:nonce:<nonce>` with value `{createdAt, used:false}` and TTL `jwt.siwe.nonce_ttl`.
+  - Response: `{ nonce, expiresAt }`.
+
+- Login with wallet: POST /api/v1/auth/login-with-wallet
+  - Request: `{ message, signature, nonce }` (EIP‑4361 message + signature + nonce).
+  - Server checks Redis nonce exists and unused, parses SIWE, validates domain and optional chainId, verifies signature via EIP‑191 recover, matches recovered address to payload address, atomically marks nonce used preserving TTL, looks up active wallet and issues short‑lived access token and rotating refresh token. Stores refresh token base64 in DB for rotation/revocation.
+  - Response aligns to `AuthResponse` with `token_type=Bearer`, `access_token`, `refresh_token`, `expires_in`, and optional `address|username|roles`.
+
+- Me endpoint: GET /api/v1/auth/me
+  - Requires `Authorization: Bearer <access_token>`.
+  - Returns profile from JWT claims and repositories.
+
+- Refresh & Logout:
+  - POST /api/v1/auth/refresh-token: Validate refresh JWT, find stored base64 token, revoke old, issue new pair, store new token.
+  - POST /api/v1/auth/logout: Revoke refresh token.
+
+- Claims & Policies:
+  - Access token includes `wallet_id` or `user_id`, optional `roles`, `username`.
+  - Protected routes must trust authenticated wallet/user identity, not client-supplied params.
+
+- Config (jwt):
+  - `issuer`, `secret_key`, `access_expiration`, `refresh_expiration`.
+  - `siwe`: `{ domain, statement, nonce_ttl, allowed_origins, require_chain_id }`.
+
+- Security Notes:
+  - Single-use nonces with TTL to prevent replay.
+  - Validate SIWE `domain`, and optionally `chainId`.
+  - Rate-limit `/auth/nonce` and `/auth/login-with-wallet` per IP/address.

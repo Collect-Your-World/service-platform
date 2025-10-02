@@ -1,0 +1,5 @@
+{
+  "name": "service-platform",
+  "release_strategy": "master",
+  "version": "0.1.0"
+}

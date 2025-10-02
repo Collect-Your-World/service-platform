@@ -1,0 +1,13 @@
+FROM flyway/flyway:10
+
+WORKDIR /
+COPY ./sql /flyway/sql
+
+ARG FLYWAY_LOCATIONS="/flyway/sql"
+
+WORKDIR /flyway/sql
+
+ENTRYPOINT [ \
+  "/flyway/flyway", \
+  "migrate" \
+]

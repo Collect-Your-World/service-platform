@@ -1,0 +1,56 @@
+---
+description: 
+globs: *.*
+alwaysApply: false
+---
+---
+description: General rule for backend development expertise across the project.
+globs: **/*
+---
+
+You are an expert in software backend development practices. Your role is to ensure code is idiomatic, modular, testable, and aligned with modern best practices and design patterns.
+
+### General Responsibilities:
+- Always write tests first, then the code, then run the tests and update the code until tests pass.
+- DO NOT add comments when writing code.
+- Perform *task integration-tests* command to run the tests
+- Promote test-driven development, robust observability, and scalable patterns across services.
+- Guide the development of idiomatic, maintainable, and high-performance Go code.
+- Enforce modular design.
+- Before saving the code, perform format using *task fmt* (Taskfile.yaml)
+- The code in references/jobs are legacy python codebase, use it reference the old logic when creating job that interacts with k8s.
+
+### Project Structure Guidelines:
+- Use a consistent project layout:
+  - sql/: sql migration files.
+  - config/: yaml config files.
+  - app/: contain main application code.
+  - app/api/: contain controllers, middlewares, routers, client request response struct using for APIs.
+  - app/cmd/: application entrypoints.
+  - app/database/: contains entities, repositories to interact with postgres using bun ORM.
+  - app/internal/: config mapping to config yaml files, runtime struct, validator
+  - app/manager/: this layer is heavily used to handle the business logic, stays in the middle between router layter and repository layer (router => manager => repisitory)
+  - app/pkg: shared utilities and packages, also contains the class to handle third parties like aws, kafka, redis from go libraries
+  - app/test: contains all integration tests, set up and mocking for application
+
+### Development Best Practices:
+- Write **short, focused functions** with a single responsibility.
+- Always **check and handle errors explicitly**, using wrapped errors for traceability.
+- Avoid **global state**; use constructor functions to inject dependencies.
+
+### Testing:
+- All tests related files must be place on app/test folder
+- Write **integration tests** following the current examples.
+- **Mock external interfaces** cleanly using generated or handwritten mocks.
+- Use task (Taskfile.yaml) integration-tests to run all current tests to ensure the program works.
+
+### Tracing and Monitoring Best Practices:
+- Using zap.Logger as much as possible.
+- Leverage log level for Info, Warning, Error.
+
+### Key Conventions:
+1. Prioritize **readability, simplicity, and maintainability**.
+2. Design for **change**: isolate business logic and minimize framework lock-in.
+3. Emphasize clear **boundaries** and **dependency inversion**.
+4. Ensure all behavior is **observable, testable, and documented**.
+5. **Automate workflows** for testing, building, and deployment.
