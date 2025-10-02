@@ -21,13 +21,13 @@ func NewCompleteClaimHandler(logger *zap.Logger) *CompleteClaimHandler {
 
 func (h *CompleteClaimHandler) Handle(ctx context.Context, job *entity.Job) error {
 	h.logger.Info("Processing complete claim job",
-		zap.String("job_id", job.ID),
+		zap.String("job_id", job.ID.String()),
 		zap.Any("payload", job.Payload))
 
 	time.Sleep(1 * time.Second)
 
 	h.logger.Info("Complete claim completed",
-		zap.String("job_id", job.ID))
+		zap.String("job_id", job.ID.String()))
 
 	return nil
 }

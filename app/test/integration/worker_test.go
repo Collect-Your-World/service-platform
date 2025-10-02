@@ -141,11 +141,6 @@ func (s *WorkerSuite) TestKYCHandler() {
 	s.r.NoError(err, "KYC handler should process job successfully")
 }
 
-func (s *WorkerSuite) TestWalletHandler() {
-	// Wallet handler not implemented yet
-	s.T().Skip("Wallet handler not implemented")
-}
-
 func (s *WorkerSuite) TestJobsByStatus() {
 	// Test retrieving jobs by status
 	ctx, cancel := context.WithTimeout(s.ctx, 10*time.Second)
@@ -171,7 +166,7 @@ func (s *WorkerSuite) TestJobsByStatus() {
 	for _, jobReq := range jobs {
 		createdJob, err := s.managers.JobManager.CreateJob(ctx, jobReq)
 		s.r.NoError(err)
-		createdJobs = append(createdJobs, createdJob.ID)
+		createdJobs = append(createdJobs, createdJob.ID.String())
 	}
 
 	// Retrieve pending jobs
@@ -183,7 +178,7 @@ func (s *WorkerSuite) TestJobsByStatus() {
 	foundJobs := 0
 	for _, pendingJob := range pendingJobs {
 		for _, createdJobID := range createdJobs {
-			if pendingJob.ID == createdJobID {
+			if pendingJob.ID.String() == createdJobID {
 				foundJobs++
 				s.a.Equal(job.Pending, pendingJob.Status)
 			}

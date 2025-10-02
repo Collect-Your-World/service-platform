@@ -2,7 +2,6 @@ package controller
 
 import (
 	"net/http"
-	"time"
 
 	"backend/service-platform/app/api/client/request"
 	"backend/service-platform/app/api/client/response"
@@ -10,6 +9,9 @@ import (
 	"backend/service-platform/app/internal/runtime"
 	"backend/service-platform/app/manager"
 	"backend/service-platform/app/pkg/jwt"
+	utilcookie "backend/service-platform/app/pkg/util/cookie"
+
+	"errors"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -54,7 +56,7 @@ func (c *AuthController) Register(ec echo.Context) error {
 	}
 
 	if err := c.managers.AuthManager.Register(ctx, req); err != nil {
-		if err.Error() == manager.ErrEmailAlreadyExists || err.Error() == manager.ErrUsernameAlreadyExisted {
+		if errors.Is(err, manager.ErrEmailAlreadyExists) || errors.Is(err, manager.ErrUsernameAlreadyExisted) {
 			return ec.JSON(http.StatusConflict, response.ToErrorResponse(http.StatusConflict, err.Error()))
 		}
 		return ec.JSON(http.StatusInternalServerError, response.ToErrorResponse(http.StatusInternalServerError, "Internal server error"))
@@ -91,20 +93,13 @@ func (c *AuthController) Login(ec echo.Context) error {
 	res, err := c.managers.AuthManager.Login(ctx, req)
 	if err != nil {
 		c.res.Logger.Error("Login failed", zap.Error(err))
-		if err.Error() == manager.ErrInvalidCredentials {
+		if errors.Is(err, manager.ErrInvalidCredentials) {
 			return ec.JSON(http.StatusUnauthorized, response.ToErrorResponse(http.StatusUnauthorized, "Invalid credentials"))
 		}
 		return ec.JSON(http.StatusInternalServerError, response.ToErrorResponse(http.StatusInternalServerError, "Internal server error"))
 	}
 
-	cookie := new(http.Cookie)
-	cookie.Name = "refresh_token"
-	cookie.Value = res.RefreshToken
-	cookie.Path = "/"
-	cookie.HttpOnly = true
-	cookie.Secure = true
-	cookie.SameSite = http.SameSiteStrictMode
-	ec.SetCookie(cookie)
+	ec.SetCookie(utilcookie.NewRefreshTokenCookie(ec.Request(), res.RefreshToken, c.res.Config.JwtConfig.RefreshExpiration))
 	res.RefreshToken = ""
 	return ec.JSON(http.StatusOK, response.ToSuccessResponse(res))
 }
@@ -132,12 +127,14 @@ func (c *AuthController) RefreshToken(ec echo.Context) error {
 	authResp, err := c.managers.AuthManager.RefreshToken(ec.Request().Context(), request.RefreshTokenRequest{RefreshToken: rtCookie.Value})
 	if err != nil {
 		c.res.Logger.Error("Token refresh failed", zap.Error(err))
-		if err.Error() == manager.ErrInvalidRefreshToken || err.Error() == manager.ErrRefreshTokenRevoked || err.Error() == manager.ErrRefreshTokenExpired {
+		if errors.Is(err, manager.ErrInvalidRefreshToken) || errors.Is(err, manager.ErrRefreshTokenRevoked) || errors.Is(err, manager.ErrRefreshTokenExpired) {
 			return ec.JSON(http.StatusUnauthorized, response.ToErrorResponse(http.StatusUnauthorized, err.Error()))
 		}
 		return ec.JSON(http.StatusInternalServerError, response.ToErrorResponse(http.StatusInternalServerError, "Internal server error"))
 	}
-
+	// Rotate cookie with new refresh token
+	ec.SetCookie(utilcookie.NewRefreshTokenCookie(ec.Request(), authResp.RefreshToken, c.res.Config.JwtConfig.RefreshExpiration))
+	authResp.RefreshToken = ""
 	return ec.JSON(http.StatusOK, response.ToSuccessResponse(authResp))
 }
 
@@ -164,8 +161,7 @@ func (c *AuthController) Logout(ec echo.Context) error {
 		return ec.JSON(http.StatusInternalServerError, response.ToErrorResponse(http.StatusInternalServerError, "Internal server error"))
 	}
 
-	expired := &http.Cookie{Name: "refresh_token", Value: "", Path: "/", Expires: time.Unix(0, 0), MaxAge: -1, HttpOnly: true, Secure: true, SameSite: http.SameSiteStrictMode}
-	ec.SetCookie(expired)
+	ec.SetCookie(utilcookie.ExpireCookie("refresh_token"))
 	return ec.JSON(http.StatusOK, response.ToSuccessResponse("Logged out successfully"))
 }
 
@@ -218,7 +214,6 @@ func (c *AuthController) Me(ec echo.Context) error {
 		EmailVerified: emailVerified,
 		PhoneVerified: phoneVerified,
 		LastLoginAt:   claims.LastLoginAt,
-		CreatedAt:     time.Now(), // This should ideally come from claims, but we'll use current time for now
 	}
 
 	return ec.JSON(http.StatusOK, response.ToSuccessResponse(meResponse))

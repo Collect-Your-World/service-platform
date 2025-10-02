@@ -25,6 +25,7 @@ import (
 	"backend/service-platform/app/pkg/logging"
 	"backend/service-platform/app/pkg/redis"
 	ctxutil "backend/service-platform/app/pkg/util/context"
+	httputil "backend/service-platform/app/test/util"
 )
 
 type RouterSuite struct {
@@ -150,6 +151,7 @@ func (s *RouterSuite) SetupTest() {
 	if err := s.cleanDBAt(s.testSetupAt); err != nil {
 		s.T().Fatal(err)
 	}
+	httputil.ClearCookies()
 }
 
 func (s *RouterSuite) TearDownTest() {

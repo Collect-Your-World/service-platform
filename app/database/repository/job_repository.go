@@ -6,11 +6,13 @@ import (
 	"backend/service-platform/app/internal/runtime"
 	"context"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type JobRepository interface {
 	Create(ctx context.Context, job *entity.Job) error
-	GetByID(ctx context.Context, id string) (*entity.Job, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*entity.Job, error)
 	GetBySQSMessageID(ctx context.Context, sqsMessageID string) (*entity.Job, error)
 	UpdateStatus(ctx context.Context, id string, status job.Status, error string) error
 	UpdateStartTime(ctx context.Context, id string, startedAt time.Time) error
@@ -38,7 +40,7 @@ func (r *jobRepository) Create(ctx context.Context, job *entity.Job) error {
 	return err
 }
 
-func (r *jobRepository) GetByID(ctx context.Context, id string) (*entity.Job, error) {
+func (r *jobRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.Job, error) {
 	job := &entity.Job{}
 	err := r.res.DB.NewSelect().Model(job).Where("id = ?", id).Where("deleted_at IS NULL").Scan(ctx)
 	if err != nil {

@@ -50,7 +50,7 @@ func (q *Queue) Enqueue(ctx context.Context, job *entity.Job) error {
 
 	// Prepare message attributes
 	attributes := map[string]string{
-		"JobID":       job.ID,
+		"JobID":       job.ID.String(),
 		"JobType":     job.Type,
 		"Priority":    job.Priority.String(),
 		"Attempts":    strconv.Itoa(job.Attempts),
@@ -64,7 +64,7 @@ func (q *Queue) Enqueue(ctx context.Context, job *entity.Job) error {
 		// SQS supports maximum delay of 15 minutes (900 seconds)
 		if delaySeconds > 900 {
 			q.logger.Warn("Job delay exceeds SQS maximum, using max delay",
-				zap.String("job_id", job.ID),
+				zap.String("job_id", job.ID.String()),
 				zap.Int32("requested_delay", delaySeconds),
 				zap.Int32("actual_delay", 900))
 			delaySeconds = 900
@@ -77,14 +77,14 @@ func (q *Queue) Enqueue(ctx context.Context, job *entity.Job) error {
 
 	if err != nil {
 		q.logger.Error("Failed to enqueue job to SQS",
-			zap.String("job_id", job.ID),
+			zap.String("job_id", job.ID.String()),
 			zap.String("queue_url", queueURL),
 			zap.Error(err))
 		return fmt.Errorf("failed to enqueue job: %w", err)
 	}
 
 	q.logger.Info("Job enqueued successfully to SQS",
-		zap.String("job_id", job.ID),
+		zap.String("job_id", job.ID.String()),
 		zap.String("type", job.Type),
 		zap.String("priority", job.Priority.String()),
 		zap.String("queue_url", queueURL))
@@ -133,7 +133,7 @@ func (q *Queue) Dequeue(ctx context.Context, queues []string) (*entity.Job, erro
 			}
 
 			q.logger.Info("Job dequeued successfully from SQS",
-				zap.String("job_id", jobEntity.ID),
+				zap.String("job_id", jobEntity.ID.String()),
 				zap.String("type", jobEntity.Type),
 				zap.String("queue_url", queueURL))
 
@@ -238,7 +238,7 @@ func (q *Queue) MarkFailedWithMetadata(ctx context.Context, jobID string, retryD
 		}
 
 		attributes := map[string]string{
-			"JobID":       job.ID,
+			"JobID":       job.ID.String(),
 			"JobType":     job.Type,
 			"Priority":    job.Priority.String(),
 			"Attempts":    strconv.Itoa(job.Attempts),
@@ -359,7 +359,7 @@ func (q *Queue) EnqueueRaw(ctx context.Context, job *entity.Job) error {
 
 	// Prepare message attributes
 	attributes := map[string]string{
-		"JobID":       job.ID,
+		"JobID":       job.ID.String(),
 		"JobType":     job.Type,
 		"Priority":    job.Priority.String(),
 		"Attempts":    strconv.Itoa(job.Attempts),
@@ -374,14 +374,14 @@ func (q *Queue) EnqueueRaw(ctx context.Context, job *entity.Job) error {
 		// SQS supports maximum delay of 15 minutes (900 seconds)
 		if delaySeconds > 900 {
 			q.logger.Warn("External job delay exceeds SQS maximum, using max delay",
-				zap.String("job_id", job.ID),
+				zap.String("job_id", job.ID.String()),
 				zap.Int32("requested_delay", delaySeconds),
 				zap.Int32("actual_delay", 900))
 			delaySeconds = 900
 		}
 
 		q.logger.Info("Sending delayed external message to SQS",
-			zap.String("job_id", job.ID),
+			zap.String("job_id", job.ID.String()),
 			zap.String("job_type", job.Type),
 			zap.String("queue_url", queueURL),
 			zap.Int32("delay_seconds", delaySeconds))
@@ -389,7 +389,7 @@ func (q *Queue) EnqueueRaw(ctx context.Context, job *entity.Job) error {
 		_, err = q.client.SendDelayedMessage(ctx, queueURL, string(jobData), delaySeconds, attributes)
 	} else {
 		q.logger.Info("Sending raw external message to SQS",
-			zap.String("job_id", job.ID),
+			zap.String("job_id", job.ID.String()),
 			zap.String("job_type", job.Type),
 			zap.String("queue_url", queueURL))
 

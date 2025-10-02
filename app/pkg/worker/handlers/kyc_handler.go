@@ -22,7 +22,7 @@ func NewKYCVerificationHandler(logger *zap.Logger) *KYCVerificationHandler {
 
 func (h *KYCVerificationHandler) Handle(ctx context.Context, job *entity.Job) error {
 	h.logger.Info("Processing KYC verification job",
-		zap.String("job_id", job.ID),
+		zap.String("job_id", job.ID.String()),
 		zap.Any("payload", job.Payload))
 
 	// Simulate KYC processing with potential failure for testing
@@ -31,13 +31,13 @@ func (h *KYCVerificationHandler) Handle(ctx context.Context, job *entity.Job) er
 	// Simulate occasional failures for retry testing
 	if job.Attempts > 0 && job.Attempts%2 == 0 {
 		h.logger.Warn("Simulating KYC verification failure for retry testing",
-			zap.String("job_id", job.ID),
+			zap.String("job_id", job.ID.String()),
 			zap.Int("attempt", job.Attempts))
 		return errors.New("KYC service temporarily unavailable")
 	}
 
 	h.logger.Info("KYC verification completed",
-		zap.String("job_id", job.ID))
+		zap.String("job_id", job.ID.String()))
 
 	return nil
 }

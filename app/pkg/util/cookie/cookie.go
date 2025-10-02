@@ -1,29 +1,52 @@
 package cookie
 
 import (
-	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
 
-// GenerateCookieValue creates a cookie value string for the session token
-// with appropriate security settings based on the request and configuration.
-func GenerateCookieValue(req *http.Request, sessionToken string, sessionTokenExpiry time.Duration) string {
-	sessionExpiration := time.Now().Add(sessionTokenExpiry)
-	isHTTPS := strings.HasPrefix(req.Header.Get("X-Forwarded-Proto"), "https") ||
-		strings.HasPrefix(req.Header.Get("X-Forwarded-Protocol"), "https")
-
-	cookieValue := fmt.Sprintf(
-		"%s=%s; Path=/; HttpOnly; SameSite=Strict; Expires=%s",
-		"sessionToken",
-		sessionToken,
-		sessionExpiration.Format(time.RFC1123),
-	)
-
-	if isHTTPS {
-		cookieValue += "; Secure"
+func isHTTPS(req *http.Request) bool {
+	if req == nil {
+		return false
 	}
+	if req.TLS != nil {
+		return true
+	}
+	xfProto := req.Header.Get("X-Forwarded-Proto")
+	xfProtocol := req.Header.Get("X-Forwarded-Protocol")
+	return strings.HasPrefix(strings.ToLower(xfProto), "https") || strings.HasPrefix(strings.ToLower(xfProtocol), "https")
+}
 
-	return cookieValue
+func NewCookie(name string, value string, expiry time.Duration, req *http.Request) *http.Cookie {
+	expiresAt := time.Now().Add(expiry)
+	c := &http.Cookie{
+		Name:     name,
+		Value:    value,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   isHTTPS(req) || os.Getenv("APP_ENV") == "production",
+		SameSite: http.SameSiteStrictMode,
+		Expires:  expiresAt,
+		MaxAge:   int(expiry.Seconds()),
+	}
+	return c
+}
+
+func ExpireCookie(name string) *http.Cookie {
+	return &http.Cookie{
+		Name:     name,
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+		Expires:  time.Unix(0, 0),
+		MaxAge:   -1,
+	}
+}
+
+func NewRefreshTokenCookie(req *http.Request, token string, expiry time.Duration) *http.Cookie {
+	return NewCookie("refresh_token", token, expiry, req)
 }

@@ -25,5 +25,4 @@ type MeResponse struct {
 	EmailVerified bool       `json:"email_verified"`
 	PhoneVerified bool       `json:"phone_verified"`
 	LastLoginAt   *time.Time `json:"last_login_at,omitempty"`
-	CreatedAt     time.Time  `json:"created_at"`
 }

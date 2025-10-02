@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 )
@@ -132,15 +133,15 @@ func (s *APIWorkerSuite) TestConcurrentAPIAndWorkerOperations() {
 
 		createdJob, err := s.managers.JobManager.CreateJob(ctx, jobReq)
 		s.r.NoError(err)
-		createdJobIDs = append(createdJobIDs, createdJob.ID)
+		createdJobIDs = append(createdJobIDs, createdJob.ID.String())
 	}
 
 	// Verify all jobs still exist and can be retrieved
 	for _, jobID := range createdJobIDs {
-		retrievedJob, err := s.managers.JobManager.GetJob(ctx, jobID)
+		retrievedJob, err := s.managers.JobManager.GetJob(ctx, uuid.MustParse(jobID))
 		s.r.NoError(err)
 		s.r.NotNil(retrievedJob)
-		s.a.Equal(jobID, retrievedJob.ID)
+		s.a.Equal(jobID, retrievedJob.ID.String())
 	}
 }
 

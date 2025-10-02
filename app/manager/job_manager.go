@@ -15,7 +15,7 @@ import (
 
 type JobManager interface {
 	CreateJob(ctx context.Context, req CreateJobRequest) (*entity.Job, error)
-	GetJob(ctx context.Context, id string) (*entity.Job, error)
+	GetJob(ctx context.Context, id uuid.UUID) (*entity.Job, error)
 	GetJobsByStatus(ctx context.Context, status job.Status, limit int) ([]*entity.Job, error)
 }
 
@@ -59,20 +59,19 @@ func (m *jobManager) CreateJob(ctx context.Context, req CreateJobRequest) (*enti
 	}
 
 	jobEntity := &entity.Job{
-		ID:          uuid.New().String(),
+		ID:          uuid.New(),
 		Type:        req.Type,
 		Priority:    req.Priority,
 		Payload:     entity.JobPayload(req.Payload),
 		MaxAttempts: req.MaxAttempts,
 		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
 		ScheduledAt: req.ScheduledAt,
 		Status:      job.Pending,
 	}
 
 	if err := m.jobRepo.Create(ctx, jobEntity); err != nil {
 		m.logger.Error("Failed to create job in database",
-			zap.String("job_id", jobEntity.ID),
+			zap.String("job_id", jobEntity.ID.String()),
 			zap.Error(err))
 		return nil, fmt.Errorf("failed to create job: %w", err)
 	}
@@ -80,20 +79,20 @@ func (m *jobManager) CreateJob(ctx context.Context, req CreateJobRequest) (*enti
 	// Enqueue job
 	if err := m.queue.Enqueue(ctx, jobEntity); err != nil {
 		m.logger.Error("Failed to enqueue job",
-			zap.String("job_id", jobEntity.ID),
+			zap.String("job_id", jobEntity.ID.String()),
 			zap.Error(err))
 		return nil, fmt.Errorf("failed to enqueue job: %w", err)
 	}
 
 	m.logger.Info("Job created successfully",
-		zap.String("job_id", jobEntity.ID),
+		zap.String("job_id", jobEntity.ID.String()),
 		zap.String("type", jobEntity.Type),
 		zap.String("priority", jobEntity.Priority.String()))
 
 	return jobEntity, nil
 }
 
-func (m *jobManager) GetJob(ctx context.Context, id string) (*entity.Job, error) {
+func (m *jobManager) GetJob(ctx context.Context, id uuid.UUID) (*entity.Job, error) {
 	return m.jobRepo.GetByID(ctx, id)
 }
 

@@ -21,13 +21,13 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	ErrUsernameAlreadyExisted = "username already exists"
-	ErrEmailAlreadyExists     = "email already exists"
-	ErrInvalidCredentials     = "invalid credentials"
-	ErrInvalidRefreshToken    = "invalid refresh token"
-	ErrRefreshTokenExpired    = "refresh token has expired"
-	ErrRefreshTokenRevoked    = "refresh token has been revoked"
+var (
+	ErrUsernameAlreadyExisted = errors.New("username already exists")
+	ErrEmailAlreadyExists     = errors.New("email already exists")
+	ErrInvalidCredentials     = errors.New("invalid credentials")
+	ErrInvalidRefreshToken    = errors.New("invalid refresh token")
+	ErrRefreshTokenExpired    = errors.New("refresh token has expired")
+	ErrRefreshTokenRevoked    = errors.New("refresh token has been revoked")
 )
 
 type AuthManager interface {
@@ -63,7 +63,7 @@ func NewAuthManager(
 func (d *DefaultAuthManager) Logout(ctx context.Context, request request.LogoutRequest) error {
 	claims, err := d.jwtManager.ValidateToken(request.RefreshToken)
 	if err != nil || claims.RefreshTokenBase64 == nil || *claims.RefreshTokenBase64 == "" {
-		return errors.New(ErrInvalidRefreshToken)
+		return ErrInvalidRefreshToken
 	}
 	h := sha256.Sum256([]byte(*claims.RefreshTokenBase64))
 	hashed := hex.EncodeToString(h[:])
@@ -77,7 +77,7 @@ func (d *DefaultAuthManager) Logout(ctx context.Context, request request.LogoutR
 func (d *DefaultAuthManager) Register(ctx context.Context, request request.RegisterRequest) error {
 	_, err := d.repositories.UserRepository.FindByEmail(ctx, request.Email)
 	if err == nil {
-		return errors.New(ErrEmailAlreadyExists)
+		return ErrEmailAlreadyExists
 	}
 	if !errors.Is(err, sql.ErrNoRows) {
 		return err
@@ -86,7 +86,7 @@ func (d *DefaultAuthManager) Register(ctx context.Context, request request.Regis
 	// Use email as username for now
 	_, err = d.repositories.UserRepository.FindByUsername(ctx, request.Email)
 	if err == nil {
-		return errors.New(ErrUsernameAlreadyExisted)
+		return ErrUsernameAlreadyExisted
 	}
 	if !errors.Is(err, sql.ErrNoRows) {
 		return err
@@ -118,7 +118,7 @@ func (d *DefaultAuthManager) Login(ctx context.Context, request request.AuthUser
 	u, err := d.repositories.UserRepository.FindByEmail(ctx, request.Email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.New(ErrInvalidCredentials)
+			return nil, ErrInvalidCredentials
 		}
 		return nil, fmt.Errorf("failed to find user: %w", err)
 	}
@@ -129,7 +129,7 @@ func (d *DefaultAuthManager) Login(ctx context.Context, request request.AuthUser
 		return nil, fmt.Errorf("failed to check password: %w", err)
 	}
 	if !valid {
-		return nil, errors.New(ErrInvalidCredentials)
+		return nil, ErrInvalidCredentials
 	}
 
 	// Update last login timestamp
@@ -160,7 +160,12 @@ func (d *DefaultAuthManager) RefreshToken(
 	ctx context.Context,
 	request request.RefreshTokenRequest,
 ) (*response.AuthResponse, error) {
-	// Validate session token and get session info
+	// Validate provided refresh token
+	claims, err := d.jwtManager.ValidateToken(request.RefreshToken)
+	if err != nil || claims.RefreshTokenBase64 == nil || *claims.RefreshTokenBase64 == "" {
+		return nil, ErrInvalidRefreshToken
+	}
+	// Validate session by hashed token
 	session, err := d.validateSession(ctx, request.RefreshToken)
 	if err != nil {
 		return nil, err
@@ -176,9 +181,19 @@ func (d *DefaultAuthManager) RefreshToken(
 		return nil, err
 	}
 
+	// Issue new refresh token and revoke the old one
+	newRefreshTokenString, err := d.createSession(ctx, u)
+	if err != nil {
+		return nil, err
+	}
+	// Revoke old session by hashed token
+	h := sha256.Sum256([]byte(*claims.RefreshTokenBase64))
+	oldHashed := hex.EncodeToString(h[:])
+	_ = d.repositories.SessionRepository.RevokeByToken(ctx, oldHashed)
+
 	// Get roles for response
 	userRoles := []role.Role{u.Role}
-	return d.createAuthResponse(&u.Username, &userRoles, accessToken.Token, request.RefreshToken), nil
+	return d.createAuthResponse(&u.Username, &userRoles, accessToken.Token, newRefreshTokenString), nil
 }
 
 // Me not required in simplified flow; controller reads claims
@@ -192,25 +207,25 @@ func (d *DefaultAuthManager) RefreshToken(
 func (d *DefaultAuthManager) validateSession(ctx context.Context, token string) (*entity.Session, error) {
 	claims, err := d.jwtManager.ValidateToken(token)
 	if err != nil {
-		return nil, errors.New(ErrInvalidRefreshToken)
+		return nil, ErrInvalidRefreshToken
 	}
 	if claims.RefreshTokenBase64 == nil || *claims.RefreshTokenBase64 == "" {
-		return nil, errors.New(ErrInvalidRefreshToken)
+		return nil, ErrInvalidRefreshToken
 	}
 	h := sha256.Sum256([]byte(*claims.RefreshTokenBase64))
 	hashed := hex.EncodeToString(h[:])
 	session, err := d.repositories.SessionRepository.FindByToken(ctx, hashed)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.New(ErrInvalidRefreshToken)
+			return nil, ErrInvalidRefreshToken
 		}
 		return nil, fmt.Errorf("failed to find session: %w", err)
 	}
 	if session.Revoked {
-		return nil, errors.New(ErrRefreshTokenRevoked)
+		return nil, ErrRefreshTokenRevoked
 	}
 	if session.ExpiresAt != nil && session.ExpiresAt.Before(time.Now()) {
-		return nil, errors.New(ErrRefreshTokenExpired)
+		return nil, ErrRefreshTokenExpired
 	}
 	return session, nil
 }

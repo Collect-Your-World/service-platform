@@ -37,7 +37,7 @@ func NewJobManagerBridge(jobManager interface{}, logger *zap.Logger) *JobManager
 func (b *JobManagerBridge) HandleMessage(ctx context.Context, sqsEvent *entity.Job) error {
 	jobLogger := b.logger.With(
 		zap.String("event_type", sqsEvent.Type),
-		zap.String("sqs_event_id", sqsEvent.ID))
+		zap.String("sqs_event_id", sqsEvent.ID.String()))
 
 	jobLogger.Info("Processing SQS event, creating job via job manager")
 
@@ -96,7 +96,7 @@ func (b *JobManagerBridge) HandleMessage(ctx context.Context, sqsEvent *entity.J
 	workerJob := results[0].Interface().(*entity.Job)
 
 	jobLogger.Info("SQS event successfully processed via job manager",
-		zap.String("worker_job_id", workerJob.ID),
+		zap.String("worker_job_id", workerJob.ID.String()),
 		zap.String("worker_job_type", workerJob.Type))
 
 	return nil
@@ -329,7 +329,7 @@ func (l *Listener) processMessage(ctx context.Context, queueURL string, message 
 	}
 
 	logger = logger.With(
-		zap.String("job_id", eventJob.ID),
+		zap.String("job_id", eventJob.ID.String()),
 		zap.String("job_type", eventJob.Type))
 
 	logger.Info("Processing job from SQS")
@@ -438,7 +438,7 @@ func (l *Listener) shouldRetry(job *entity.Job, err error) bool {
 	// Check if job has remaining attempts
 	if job.Attempts >= job.MaxAttempts {
 		l.logger.Info("Job exceeded max attempts",
-			zap.String("job_id", job.ID),
+			zap.String("job_id", job.ID.String()),
 			zap.Int("attempts", job.Attempts),
 			zap.Int("max_attempts", job.MaxAttempts))
 		return false

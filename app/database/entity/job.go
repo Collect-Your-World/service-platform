@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
 
@@ -50,14 +51,14 @@ func (p *JobPayload) Scan(value interface{}) error {
 type Job struct {
 	bun.BaseModel `bun:"table:jobs,alias:j"`
 
-	ID          string       `bun:"id,pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	ID          uuid.UUID    `bun:"id,pk,type:uuid,default:uuid_generate_v4()" json:"id"`
 	Type        string       `bun:"type,notnull" json:"type"`
 	Priority    job.Priority `bun:"priority,notnull" json:"priority"`
 	Payload     JobPayload   `bun:"payload,type:jsonb" json:"payload"`
 	Attempts    int          `bun:"attempts,notnull,default:0" json:"attempts"`
 	MaxAttempts int          `bun:"max_attempts,notnull,default:3" json:"max_attempts"`
-	CreatedAt   time.Time    `bun:"created_at,nullzero,notnull,default:current_timestamp" json:"created_at"`
-	UpdatedAt   time.Time    `bun:"updated_at,nullzero,notnull,default:current_timestamp" json:"updated_at"`
+	CreatedAt   time.Time    `bun:"created_at,notnull,default:current_timestamp" json:"created_at"`
+	UpdatedAt   *time.Time   `bun:"updated_at" json:"updated_at"`
 	DeletedAt   *time.Time   `bun:"deleted_at,nullzero" json:"deleted_at,omitempty"`
 	ScheduledAt *time.Time   `bun:"scheduled_at,nullzero" json:"scheduled_at,omitempty"`
 	StartedAt   *time.Time   `bun:"started_at,nullzero" json:"started_at,omitempty"`

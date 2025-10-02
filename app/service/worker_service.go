@@ -155,21 +155,21 @@ func (ws *WorkerService) processRetryableJobs(ctx context.Context, logger *zap.L
 	logger.Info("Found retryable jobs", zap.Int("count", len(jobs)))
 
 	for _, job := range jobs {
-		if err := ws.jobRepo.UpdateStatus(ctx, job.ID, "pending", ""); err != nil {
+		if err := ws.jobRepo.UpdateStatus(ctx, job.ID.String(), "pending", ""); err != nil {
 			logger.Error("Failed to update job status for retry",
-				zap.String("job_id", job.ID),
+				zap.String("job_id", job.ID.String()),
 				zap.Error(err))
 			continue
 		}
 
 		if err := ws.queue.Enqueue(ctx, job); err != nil {
 			logger.Error("Failed to re-enqueue job",
-				zap.String("job_id", job.ID),
+				zap.String("job_id", job.ID.String()),
 				zap.Error(err))
 			continue
 		}
 
-		logger.Info("Job re-queued for retry", zap.String("job_id", job.ID))
+		logger.Info("Job re-queued for retry", zap.String("job_id", job.ID.String()))
 	}
 }
 

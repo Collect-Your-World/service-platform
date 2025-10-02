@@ -99,3 +99,27 @@ func RequestHTTP[T any](e *echo.Echo, method string, target string, token *strin
 
 	return res, code, err
 }
+
+func GetCookie(name string) *http.Cookie {
+	if c, ok := cookies[name]; ok {
+		return c
+	}
+	return nil
+}
+
+func ClearCookies() {
+	for k := range cookies {
+		delete(cookies, k)
+	}
+}
+
+func SetCookie(name string, value string, maxAgeSeconds int) {
+	expires := time.Now().Add(time.Duration(maxAgeSeconds) * time.Second)
+	cookies[name] = &http.Cookie{
+		Name:    name,
+		Value:   value,
+		Path:    "/",
+		Expires: expires,
+		MaxAge:  maxAgeSeconds,
+	}
+}

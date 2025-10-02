@@ -21,13 +21,13 @@ func NewInitClaimHandler(logger *zap.Logger) *InitClaimHandler {
 
 func (h *InitClaimHandler) Handle(ctx context.Context, job *entity.Job) error {
 	h.logger.Info("Processing init claim job",
-		zap.String("job_id", job.ID),
+		zap.String("job_id", job.ID.String()),
 		zap.Any("payload", job.Payload))
 
 	time.Sleep(2 * time.Second)
 
 	h.logger.Info("Init claim completed",
-		zap.String("job_id", job.ID))
+		zap.String("job_id", job.ID.String()))
 
 	return nil
 }

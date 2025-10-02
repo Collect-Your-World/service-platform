@@ -156,7 +156,7 @@ func (p *workerPool) runWorker(workerID int) {
 
 func (p *workerPool) processJob(logger *zap.Logger, jobEntity *entity.Job) {
 	jobLogger := logger.With(
-		zap.String("job_id", jobEntity.ID),
+		zap.String("job_id", jobEntity.ID.String()),
 		zap.String("job_type", jobEntity.Type),
 		zap.String("priority", jobEntity.Priority.String()),
 	)
@@ -167,13 +167,13 @@ func (p *workerPool) processJob(logger *zap.Logger, jobEntity *entity.Job) {
 	opCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if err := p.queue.MarkProcessing(opCtx, jobEntity.ID); err != nil {
+	if err := p.queue.MarkProcessing(opCtx, jobEntity.ID.String()); err != nil {
 		jobLogger.Error("Failed to mark job as processing", zap.Error(err))
 		return
 	}
 
 	startTime := time.Now()
-	if err := p.jobRepo.UpdateJobToProcessing(opCtx, jobEntity.ID, startTime); err != nil {
+	if err := p.jobRepo.UpdateJobToProcessing(opCtx, jobEntity.ID.String(), startTime); err != nil {
 		jobLogger.Error("Failed to update job to processing state", zap.Error(err))
 	}
 
@@ -199,11 +199,11 @@ func (p *workerPool) handleJobSuccess(logger *zap.Logger, jobEntity *entity.Job)
 	cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if err := p.jobRepo.UpdateJobToCompleted(cleanupCtx, jobEntity.ID, completedAt); err != nil {
+	if err := p.jobRepo.UpdateJobToCompleted(cleanupCtx, jobEntity.ID.String(), completedAt); err != nil {
 		logger.Error("Failed to update job to completed state", zap.Error(err))
 	}
 
-	if err := p.queue.MarkCompleted(cleanupCtx, jobEntity.ID); err != nil {
+	if err := p.queue.MarkCompleted(cleanupCtx, jobEntity.ID.String()); err != nil {
 		logger.Error("Failed to mark job as completed in queue", zap.Error(err))
 	}
 
@@ -221,11 +221,11 @@ func (p *workerPool) handleJobFailure(logger *zap.Logger, jobEntity *entity.Job,
 	defer cancel()
 
 	if jobEntity.Attempts >= jobEntity.MaxAttempts {
-		if err := p.jobRepo.UpdateJobToFailed(cleanupCtx, jobEntity.ID, jobErr.Error()); err != nil {
+		if err := p.jobRepo.UpdateJobToFailed(cleanupCtx, jobEntity.ID.String(), jobErr.Error()); err != nil {
 			logger.Error("Failed to update job to failed state", zap.Error(err))
 		}
 
-		if err := p.queue.MarkFailed(cleanupCtx, jobEntity.ID, 0); err != nil {
+		if err := p.queue.MarkFailed(cleanupCtx, jobEntity.ID.String(), 0); err != nil {
 			logger.Error("Failed to mark job as failed in queue", zap.Error(err))
 		}
 
@@ -233,11 +233,11 @@ func (p *workerPool) handleJobFailure(logger *zap.Logger, jobEntity *entity.Job,
 	} else {
 		retryDelay := p.calculateRetryDelay(jobEntity.Attempts)
 
-		if err := p.jobRepo.UpdateJobToRetrying(cleanupCtx, jobEntity.ID, jobErr.Error()); err != nil {
+		if err := p.jobRepo.UpdateJobToRetrying(cleanupCtx, jobEntity.ID.String(), jobErr.Error()); err != nil {
 			logger.Error("Failed to update job to retrying state", zap.Error(err))
 		}
 
-		if err := p.queue.MarkFailed(cleanupCtx, jobEntity.ID, retryDelay); err != nil {
+		if err := p.queue.MarkFailed(cleanupCtx, jobEntity.ID.String(), retryDelay); err != nil {
 			logger.Error("Failed to mark job for retry in queue", zap.Error(err))
 		}
 

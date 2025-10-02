@@ -63,12 +63,12 @@ func (q *redisQueue) Enqueue(ctx context.Context, job *entity.Job) error {
 
 	_, err = pipe.Exec(ctx)
 	if err != nil {
-		q.logger.Error("Failed to enqueue job", zap.String("job_id", job.ID), zap.Error(err))
+		q.logger.Error("Failed to enqueue job", zap.String("job_id", job.ID.String()), zap.Error(err))
 		return fmt.Errorf("failed to enqueue job: %w", err)
 	}
 
 	q.logger.Info("Job enqueued successfully",
-		zap.String("job_id", job.ID),
+		zap.String("job_id", job.ID.String()),
 		zap.String("type", job.Type),
 		zap.String("priority", job.Priority.String()),
 		zap.String("queue", queueKey))
@@ -96,7 +96,7 @@ func (q *redisQueue) Dequeue(ctx context.Context, queues []string) (*entity.Job,
 	}
 
 	q.logger.Info("Job dequeued successfully",
-		zap.String("job_id", job.ID),
+		zap.String("job_id", job.ID.String()),
 		zap.String("type", job.Type),
 		zap.String("queue", result[0]))
 

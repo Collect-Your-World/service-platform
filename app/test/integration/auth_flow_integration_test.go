@@ -69,13 +69,13 @@ func (s *AuthFlowIntegrationSuite) TestCompleteAuthFlow_Register_Login_Me_Refres
 	s.r.Equal(http.StatusOK, loginCode)
 	s.r.Equal("success", loginResp.Message)
 	s.r.NotEmpty(loginResp.Data.AccessToken)
-	s.r.NotEmpty(loginResp.Data.RefreshToken)
+	s.r.Equal("", loginResp.Data.RefreshToken)
 	s.r.Equal("Bearer", loginResp.Data.TokenType)
 	s.r.Equal(testEmail, *loginResp.Data.Username)
 
-	// Verify refresh token cookie was set
-	// Note: In the current implementation, refresh token is returned in response, not cookie
-	// This might need to be updated based on actual implementation
+	// Read refresh token from cookie
+	rt := httputil.GetCookie("refresh_token")
+	s.Require().NotNil(rt)
 
 	// Step 3: Call /me with the access token
 	s.T().Log("Step 3: Getting user profile with access token")
@@ -101,9 +101,11 @@ func (s *AuthFlowIntegrationSuite) TestCompleteAuthFlow_Register_Login_Me_Refres
 	// Step 4: Refresh the token using the refresh token
 	s.T().Log("Step 4: Refreshing access token")
 	refreshReq := request.RefreshTokenRequest{
-		RefreshToken: loginResp.Data.RefreshToken,
+		RefreshToken: rt.Value,
 	}
 
+	// Seed cookie for refresh
+	httputil.SetCookie("refresh_token", rt.Value, 3600)
 	refreshResp, refreshCode, err := httputil.RequestHTTP[response.GeneralResponse[response.AuthResponse]](
 		s.e,
 		http.MethodPost,
@@ -142,9 +144,11 @@ func (s *AuthFlowIntegrationSuite) TestCompleteAuthFlow_Register_Login_Me_Refres
 	// Step 6: Logout
 	s.T().Log("Step 6: Logging out")
 	logoutReq := request.LogoutRequest{
-		RefreshToken: loginResp.Data.RefreshToken,
+		RefreshToken: rt.Value,
 	}
 
+	// Seed cookie for logout
+	httputil.SetCookie("refresh_token", rt.Value, 3600)
 	logoutResp, logoutCode, err := httputil.RequestHTTP[response.GeneralResponse[string]](
 		s.e,
 		http.MethodPost,
@@ -282,7 +286,10 @@ func (s *AuthFlowIntegrationSuite) TestAuthFlow_MultipleUsers() {
 		s.r.Equal(user.email, *loginResp.Data.Username)
 
 		accessTokens = append(accessTokens, loginResp.Data.AccessToken)
-		refreshTokens = append(refreshTokens, loginResp.Data.RefreshToken)
+		// capture refresh token from cookie
+		rtc := httputil.GetCookie("refresh_token")
+		s.Require().NotNil(rtc)
+		refreshTokens = append(refreshTokens, rtc.Value)
 	}
 
 	// Test that each user can only access their own profile
@@ -337,6 +344,8 @@ func (s *AuthFlowIntegrationSuite) TestAuthFlow_MultipleUsers() {
 			RefreshToken: refreshTokens[i],
 		}
 
+		// Seed cookie for refresh
+		httputil.SetCookie("refresh_token", refreshReq.RefreshToken, 3600)
 		refreshResp, refreshCode, err := httputil.RequestHTTP[response.GeneralResponse[response.AuthResponse]](
 			s.e,
 			http.MethodPost,
@@ -359,6 +368,8 @@ func (s *AuthFlowIntegrationSuite) TestAuthFlow_MultipleUsers() {
 			RefreshToken: refreshTokens[i],
 		}
 
+		// Seed cookie for logout
+		httputil.SetCookie("refresh_token", refreshTokens[i], 3600)
 		logoutResp, logoutCode, err := httputil.RequestHTTP[response.GeneralResponse[string]](
 			s.e,
 			http.MethodPost,
