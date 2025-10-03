@@ -1,0 +1,23 @@
+---
+description: 
+globs: sql/*.sql,app/database/**/*.*
+alwaysApply: false
+---
+---
+description: Best practices when interacting with databases in backend Go code.
+globs: sql/*.sql, app/database/**/*.go
+---
+The project is using postgresql, golang bun ORM, and flyway for migration strategy.
+When interacting with databases:
+- Follow current structure strictly: entity folder, repository folder, sql migrations in sql folder.
+- Follow the current naming conversation when creating the new migration files.
+- Do not edit current migration files, create new one to alter.
+- Format the migration files
+- Each table must have corresponding entity in database/entity folder.
+- The folder database/repository is used for the sql interaction layer.
+- Use prepared statements to prevent SQL injection.
+- Handle database errors gracefully.
+- Levering bun ORM for queries and data modeling.
+- Close database connections when they are no longer needed.
+- Use connection pooling to improve performance.
+- Project is using Taskfile  (Taskfile.yaml) to handle, there are tasks: migrate, clean-migrate, clean-migrate-test to interact with database.

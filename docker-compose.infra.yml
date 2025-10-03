@@ -1,0 +1,51 @@
+version: "3.6"
+services:
+  postgres:
+    image: imresamu/postgis:16-3.4
+    platform: linux/arm64/v8
+    restart: always
+    environment:
+      POSTGRES_USER: local
+      POSTGRES_PASSWORD: local
+      POSTGRES_DB: serviceplatformtpl
+      POSTGRES_HOST_AUTH_METHOD: password
+    networks:
+      - c0x12c_net
+    command: postgres -N 500
+    ports:
+      - 5432:5432
+    volumes:
+      - ./db-scripts:/docker-entrypoint-initdb.d
+      - ~/.pg-datajs:/var/lib/postgresql/data # Persistent volume
+  
+  redis-cluster:
+    image: channguyen/redis-cluster-x86:latest
+    restart: always
+    networks:
+      - c0x12c_net
+    ports:
+      - 30001:30001
+      - 30002:30002
+      - 30003:30003
+      - 30004:30004
+      - 30005:30005
+      - 30006:30006
+
+  localstack:
+    image: localstack/localstack
+    ports:
+      - 4566:4566
+    environment:
+      - DEBUG=${DEBUG-}
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - '${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack'
+      - './sqs_bootstrap.sh:/etc/localstack/init/ready.d/sqs_bootstrap.sh'
+
+networks:
+  c0x12c_net:
+    name: c0_net
+
+volumes:
+  pg-datajs:

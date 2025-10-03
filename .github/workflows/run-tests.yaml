@@ -1,0 +1,79 @@
+name: PR Check
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SERVICE_NAME: "service-platform"
+  APP_ENV: test
+
+jobs:
+  gotest:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    services:
+      postgresql:
+        image: postgis/postgis:14-3.3
+        env:
+          POSTGRES_PASSWORD: local
+          POSTGRES_USER: local
+          POSTGRES_DB: serviceplatformtpltest
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Golang
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.5'
+
+      - name: Configure Git for private modules
+        env:
+          TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          git config --global url."https://x-access-token:${TOKEN}@github.com".insteadOf "https://github.com"
+
+      - name: Get dependencies
+        run: go mod download
+
+      - name: Install Flyway
+        run: |
+          sudo snap install flyway
+          sudo ln -s /snap/bin/flyway /usr/local/bin/flyway
+
+      - name: Run Redis cluster
+        uses: vishnudxb/redis-cluster@1.0.9
+        with:
+          master1-port: 30001
+          master2-port: 30002
+          master3-port: 30003
+          slave1-port: 30004
+          slave2-port: 30005
+          slave3-port: 30006
+
+      - name: Start LocalStack
+        uses: LocalStack/setup-localstack@v0.2.3
+        with:
+          image-tag: 'latest'
+
+      - name: Run tests
+        run: |
+          go install github.com/roerohan/wait-for-it@latest
+          go install github.com/go-task/task/v3/cmd/task@latest
+          task clean-migrate-test
+          task integration-tests

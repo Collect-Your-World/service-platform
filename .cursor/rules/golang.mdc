@@ -1,0 +1,26 @@
+---
+description: 
+globs: app/**/*.*,config/*.*,*.*
+alwaysApply: false
+---
+---
+description: Best practices when developing backend Go code.
+globs: *.go
+---
+The project is using Golang 1.24, Echo web framework.
+You must ensure code is idiomatic, modular, testable, and aligned with modern best practices and design patterns in Golang.
+When working with Go code:
+- DO NOT add comments when writing code.
+- Enforce modular design.
+- Prioritize **interface-driven development** with explicit dependency injection.
+- Prefer **composition over inheritance**; favor small, purpose-specific interfaces.
+- Ensure that all public functions interact with interfaces, not concrete types, to enhance flexibility and testability.
+- Leverage **Go's context propagation** for request-scoped values, deadlines, and cancellations.
+- Group code by feature when it improves clarity and cohesion.
+- Keep logic decoupled from framework-specific code.
+- Ensure safe use of **goroutines**, and guard shared state with channels or sync primitives.
+- Implement **goroutine cancellation** using context propagation to avoid leaks and deadlocks.
+- **Defer closing resources** and handle them carefully to avoid leaks.
+- Rely on **stable, minimal third-party libraries**; prefer the standard library where feasible.
+- Use **Go modules** for dependency management and reproducibility.
+- Version-lock dependencies for deterministic builds.

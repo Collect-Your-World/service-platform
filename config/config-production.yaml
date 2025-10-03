@@ -1,0 +1,61 @@
+server:
+  port: 8080
+
+database:
+  protocol: postgresql
+  url: localhost
+  replica_url: localhost
+  name: serviceplatformtpl
+  username: local
+  password: local
+  port: 5432
+  ssl_mode: require
+  max_db_conns: 10
+  max_idle_db_conns: 10
+  max_conn_lifetime: 1800
+  max_conn_idle_time: 300
+
+redis:
+  hosts: ""
+  pool_size: 1000
+  min_idle_conns: 100
+  max_idle_conns: 500
+  write_timeout: 10
+  read_timeout: 5
+  conn_max_lifetime: 600 # 10 minutes
+
+aws:
+  region: "us-west-2"
+  endpoint: ""
+  sqs:
+    queue_urls:
+      sqs_scheduled_job_queue: ""
+    polling:
+      max_messages: 10
+      wait_time_seconds: 20
+      visibility_timeout_seconds: 900
+      polling_interval: 5s
+    message:
+      max_retries: 3
+      base_retry_delay: 10s
+      max_retry_delay: 600s
+
+worker:
+  pool_size: 5
+  health_monitor_interval: 2m
+
+router:
+  allowed_origins: "*"
+  allowed_headers: "*"
+
+jwt:
+  issuer: "stack-service-platform"
+  secret_key: "11111111-1111-1111-1111-111111111111"
+  access_expiration: 24h
+  refresh_expiration: 168h
+
+bcrypt:
+  cost: 10
+
+super_admin:
+  allowed_new_creation: false
