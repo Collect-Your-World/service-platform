@@ -40,6 +40,8 @@ Run `task --list` to see all available tasks:
 #### Swagger generation
 
 ```bash
+task swagger
+// or
 swag init -g app/cmd/api/main.go
 ```
 
