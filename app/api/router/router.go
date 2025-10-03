@@ -12,7 +12,7 @@ import (
 	"backend/service-platform/app/internal/validator"
 	ctxutil "backend/service-platform/app/pkg/util/context"
 	echoUtil "backend/service-platform/app/pkg/util/echo"
-	// _ "backend/service-platform/docs"
+	_ "backend/service-platform/docs"
 )
 
 const (
@@ -106,6 +106,6 @@ func (r *Router) setupAuthRoutes(apiGroup *echo.Group) {
 	authGroup.POST("/register", r.controllers.AuthController.Register)
 	authGroup.POST("/login", r.controllers.AuthController.Login)
 	authGroup.POST("/logout", r.controllers.AuthController.Logout)
-	authGroup.POST("/refresh", r.controllers.AuthController.RefreshToken)
+	authGroup.POST("/refresh-token", r.controllers.AuthController.RefreshToken)
 	authGroup.GET("/me", r.controllers.AuthController.Me, r.middleware.RequireAuth())
 }

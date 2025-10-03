@@ -15,7 +15,7 @@ Auth Flow (Email/Password + JWT)
   - Extracts user info from JWT claims: `user_id`, `username`, `email`, `phone_number`, `role`, `email_verified`, `phone_verified`, `last_login_at`.
   - Response: `MeResponse` with user profile data.
 
-- Refresh endpoint: POST /api/v1/auth/refresh
+- Refresh endpoint: POST /api/v1/auth/refresh-token
   - Uses refresh token from httpOnly cookie.
   - Validates refresh JWT, checks session in database, finds user, generates new access token, creates new refresh token, revokes old session, sets new refresh token cookie.
   - Response: `AuthResponse` with new tokens.

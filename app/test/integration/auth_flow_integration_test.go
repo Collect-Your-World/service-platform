@@ -109,7 +109,7 @@ func (s *AuthFlowIntegrationSuite) TestCompleteAuthFlow_Register_Login_Me_Refres
 	refreshResp, refreshCode, err := httputil.RequestHTTP[response.GeneralResponse[response.AuthResponse]](
 		s.e,
 		http.MethodPost,
-		"/api/v1/auth/refresh",
+		"/api/v1/auth/refresh-token",
 		nil,
 		refreshReq,
 	)
@@ -166,7 +166,7 @@ func (s *AuthFlowIntegrationSuite) TestCompleteAuthFlow_Register_Login_Me_Refres
 	refreshAfterLogoutResp, refreshAfterLogoutCode, err := httputil.RequestHTTP[response.GeneralResponse[any]](
 		s.e,
 		http.MethodPost,
-		"/api/v1/auth/refresh",
+		"/api/v1/auth/refresh-token",
 		nil,
 		refreshReq,
 	)
@@ -349,7 +349,7 @@ func (s *AuthFlowIntegrationSuite) TestAuthFlow_MultipleUsers() {
 		refreshResp, refreshCode, err := httputil.RequestHTTP[response.GeneralResponse[response.AuthResponse]](
 			s.e,
 			http.MethodPost,
-			"/api/v1/auth/refresh",
+			"/api/v1/auth/refresh-token",
 			nil,
 			refreshReq,
 		)

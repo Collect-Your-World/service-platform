@@ -25,7 +25,7 @@ const (
 	LoginEndpoint        = "/api/v1/auth/login"
 	RegisterEndpoint     = "/api/v1/auth/register"
 	LogoutEndpoint       = "/api/v1/auth/logout"
-	RefreshTokenEndpoint = "/api/v1/auth/refresh"
+	RefreshTokenEndpoint = "/api/v1/auth/refresh-token"
 	MeEndpoint           = "/api/v1/auth/me"
 )
 

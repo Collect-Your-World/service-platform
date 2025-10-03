@@ -69,3 +69,8 @@ tasks:
     summary: Generate mocks using mockery
     cmds:
       - mockery --config .mockery.yml
+
+  swagger:
+    summary: Generate Swagger docs
+    cmds:
+      - swag init -g app/cmd/api/main.go

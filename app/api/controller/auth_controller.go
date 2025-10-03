@@ -109,13 +109,11 @@ func (c *AuthController) Login(ec echo.Context) error {
 // RefreshToken godoc
 //
 //	@Summary		Refresh access token
-//	@Description	Get new access token using refresh token
+//	@Description	Get new access token using refresh token from cookie
 //	@Tags			auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			request	body		request.RefreshTokenRequest	true	"Refresh token"
 //	@Success		200		{object}	response.AuthResponse
-//	@Failure		400
 //	@Failure		401
 //	@Failure		500
 //	@Router			/api/v1/auth/refresh-token [post]
@@ -141,13 +139,12 @@ func (c *AuthController) RefreshToken(ec echo.Context) error {
 // Logout godoc
 //
 //	@Summary		User logout
-//	@Description	Revoke refresh token and logout user
+//	@Description	Revoke refresh token and logout user using refresh token from cookie
 //	@Tags			auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			request	body		request.LogoutRequest	true	"Logout request"
 //	@Success		200
-//	@Failure		400
+//	@Failure		401
 //	@Failure		500
 //	@Router			/api/v1/auth/logout [post]
 func (c *AuthController) Logout(ec echo.Context) error {

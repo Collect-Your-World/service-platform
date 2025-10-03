@@ -71,6 +71,12 @@ jobs:
         with:
           image-tag: 'latest'
 
+      - name: Install swag
+        run: go install github.com/swaggo/swag/cmd/swag@latest
+
+      - name: Generate Swagger docs
+        run: swag init -g app/cmd/api/main.go
+
       - name: Run tests
         run: |
           go install github.com/roerohan/wait-for-it@latest
