@@ -12,7 +12,7 @@ import (
 	"backend/service-platform/app/internal/validator"
 	ctxutil "backend/service-platform/app/pkg/util/context"
 	echoUtil "backend/service-platform/app/pkg/util/echo"
-	// _ "backend/service-platform/docs"
+	_ "backend/service-platform/docs"
 )
 
 const (

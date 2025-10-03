@@ -166,7 +166,7 @@ func (d *DefaultAuthManager) RefreshToken(
 		return nil, ErrInvalidRefreshToken
 	}
 	// Validate session by hashed token
-	session, err := d.validateSession(ctx, request.RefreshToken)
+	session, err := d.validateSession(ctx, d.hash(*claims.RefreshTokenBase64))
 	if err != nil {
 		return nil, err
 	}
@@ -196,25 +196,8 @@ func (d *DefaultAuthManager) RefreshToken(
 	return d.createAuthResponse(&u.Username, &userRoles, accessToken.Token, newRefreshTokenString), nil
 }
 
-// Me not required in simplified flow; controller reads claims
-
-// removed principal-based refresh
-
-// getUserRoles extracts roles for a user by user ID
-// roles removed
-
-// validateSession validates and retrieves session information
 func (d *DefaultAuthManager) validateSession(ctx context.Context, token string) (*entity.Session, error) {
-	claims, err := d.jwtManager.ValidateToken(token)
-	if err != nil {
-		return nil, ErrInvalidRefreshToken
-	}
-	if claims.RefreshTokenBase64 == nil || *claims.RefreshTokenBase64 == "" {
-		return nil, ErrInvalidRefreshToken
-	}
-	h := sha256.Sum256([]byte(*claims.RefreshTokenBase64))
-	hashed := hex.EncodeToString(h[:])
-	session, err := d.repositories.SessionRepository.FindByToken(ctx, hashed)
+	session, err := d.repositories.SessionRepository.FindByToken(ctx, token)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrInvalidRefreshToken
@@ -246,11 +229,8 @@ func (d *DefaultAuthManager) createSession(ctx context.Context, user *entity.Use
 		return "", err
 	}
 
-	h := sha256.Sum256([]byte(refreshToken.TokenBase64))
-	hashed := hex.EncodeToString(h[:])
-
 	exp := time.Now().Add(d.res.Config.JwtConfig.RefreshExpiration)
-	_, err = d.repositories.SessionRepository.Insert(ctx, &entity.Session{UserID: user.ID, Token: hashed, ExpiresAt: &exp})
+	_, err = d.repositories.SessionRepository.Insert(ctx, &entity.Session{UserID: user.ID, Token: d.hash(refreshToken.TokenBase64), ExpiresAt: &exp})
 	if err != nil {
 		return "", err
 	}
@@ -275,7 +255,7 @@ func (d *DefaultAuthManager) createAuthResponse(
 }
 
 // generateUserAccessToken creates an access token for a user with full user information
-func (d *DefaultAuthManager) generateUserAccessToken(ctx context.Context, user *entity.User) (*jwt.AccessToken, error) {
+func (d *DefaultAuthManager) generateUserAccessToken(_ context.Context, user *entity.User) (*jwt.AccessToken, error) {
 	roleStr := string(user.Role)
 	accessToken, err := d.jwtManager.GenerateAccessToken(
 		&user.ID,
@@ -291,4 +271,9 @@ func (d *DefaultAuthManager) generateUserAccessToken(ctx context.Context, user *
 		return nil, fmt.Errorf("failed to generate access token: %w", err)
 	}
 	return accessToken, nil
+}
+
+func (d *DefaultAuthManager) hash(rawValue string) string {
+	h := sha256.Sum256([]byte(rawValue))
+	return hex.EncodeToString(h[:])
 }
