@@ -73,4 +73,4 @@ tasks:
   swagger:
     summary: Generate Swagger docs
     cmds:
-      - swag init -g app/cmd/api/main.go
+      - swag init -g app/cmd/api/main.go -o docs --parseDependency --parseInternal --parseDepth 1
