@@ -15,7 +15,6 @@ Explain the thought process behind your approach and how it aligns with best pra
 
 ## Types of Changes
 <!--- What types of changes does your code introduce? Put an `x` in all the boxes that apply --->
-
 - [ ] ❌ Breaking change (fix or feature that would cause existing functionality to not work as expected)
 - [ ] 🚀 New feature (non-breaking change which adds functionality)
 - [ ] 🕷 Bug fix (non-breaking change which fixes an issue)
