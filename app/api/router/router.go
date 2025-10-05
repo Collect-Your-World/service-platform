@@ -18,7 +18,7 @@ import (
 const (
 	// Base paths
 	apiV1BasePath = "/api/v1"
-	swaggerPath   = "/swagger/*"
+	swaggerPath   = "/api/v1/swagger/*"
 	healthPath    = "/health"
 
 	// Route prefixes
@@ -34,11 +34,7 @@ type Router struct {
 	repositories *repository.Repositories
 }
 
-// NewRouter @title Stack
-// @description This is API documentation of Stack
-// @version 1.0
-// @host localhost:8081
-// @BasePath /api/v1
+// NewRouter creates a new router instance
 func NewRouter(
 	res runtime.Resource,
 	vals *validator.Validators,

@@ -1,5 +1,11 @@
 package main
 
+// @title Service Platform API
+// @description This is API documentation of Service Platform
+// @version 1.0
+// @host localhost:8080
+// @BasePath /api/v1
+// @schemes http https
 import (
 	"backend/service-platform/app/pkg/aws"
 	"context"
