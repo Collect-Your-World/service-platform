@@ -22,6 +22,19 @@ func NewUserController(managers *manager.Managers, res runtime.Resource) *UserCo
 	return &UserController{res: res, managers: managers, jwt: jwt.NewJwt(res.Config.JwtConfig)}
 }
 
+// GetBalances godoc
+//
+//	@Summary		Get user balances
+//	@Description	Return current balances for the authenticated user; optionally filter by currency
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			currency	query	string	false	"Filter by currency" 	Enums(COIN,SPIN)
+//	@Success		200		{object}	map[string]int64
+//	@Failure		400
+//	@Failure		401
+//	@Failure		500
+//	@Router			/api/v1/users/balances [get]
 func (c *UserController) GetBalances(ec echo.Context) error {
 	claims, err := c.jwt.GetClaims(ec)
 	if err != nil || claims.UserID == nil {
@@ -49,6 +62,20 @@ func (c *UserController) GetBalances(ec echo.Context) error {
 	return ec.JSON(http.StatusOK, response.ToSuccessResponse(items))
 }
 
+// GetBalanceHistory godoc
+//
+//	@Summary		Get user balance history
+//	@Description	List balance change transactions for the authenticated user
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			currency	query	string	true	"Currency" 	Enums(COIN,SPIN)
+//	@Param			type		query	string	false	"Transaction type"
+//	@Success		200		{array}		response.BalanceTransactionResponse
+//	@Failure		400
+//	@Failure		401
+//	@Failure		500
+//	@Router			/api/v1/users/balances/history [get]
 func (c *UserController) GetBalanceHistory(ec echo.Context) error {
 	claims, err := c.jwt.GetClaims(ec)
 	if err != nil || claims.UserID == nil {
