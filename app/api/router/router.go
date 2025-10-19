@@ -111,4 +111,5 @@ func (r *Router) setupAuthRoutes(apiGroup *echo.Group) {
 func (r *Router) setupUserRoutes(apiGroup *echo.Group) {
 	usersGroup := apiGroup.Group(usersPrefix)
 	usersGroup.GET("/balances", r.controllers.UserController.GetBalances, r.middleware.RequireAuth())
+	usersGroup.GET("/balances/history", r.controllers.UserController.GetBalanceHistory, r.middleware.RequireAuth())
 }
