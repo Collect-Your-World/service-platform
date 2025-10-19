@@ -22,7 +22,8 @@ const (
 	healthPath    = "/health"
 
 	// Route prefixes
-	authPrefix = "/auth"
+	authPrefix  = "/auth"
+	usersPrefix = "/users"
 )
 
 type Router struct {
@@ -95,6 +96,7 @@ func (r *Router) setupRoutes() {
 	apiGroup := r.Echo.Group(apiV1BasePath)
 
 	r.setupAuthRoutes(apiGroup)
+	r.setupUserRoutes(apiGroup)
 }
 
 func (r *Router) setupAuthRoutes(apiGroup *echo.Group) {
@@ -104,4 +106,9 @@ func (r *Router) setupAuthRoutes(apiGroup *echo.Group) {
 	authGroup.POST("/logout", r.controllers.AuthController.Logout)
 	authGroup.POST("/refresh-token", r.controllers.AuthController.RefreshToken)
 	authGroup.GET("/me", r.controllers.AuthController.Me, r.middleware.RequireAuth())
+}
+
+func (r *Router) setupUserRoutes(apiGroup *echo.Group) {
+	usersGroup := apiGroup.Group(usersPrefix)
+	usersGroup.GET("/balances", r.controllers.UserController.GetBalances, r.middleware.RequireAuth())
 }
