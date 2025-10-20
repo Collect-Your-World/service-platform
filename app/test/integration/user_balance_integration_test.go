@@ -109,20 +109,20 @@ func (s *UserBalanceIntegrationSuite) Test_GetBalanceHistory_Filtered() {
 	s.r.NoError(err)
 	s.r.Equal(http.StatusOK, coinCode)
 	s.a.GreaterOrEqual(len(coinHist.Data), 1)
-	s.a.Equal(currency.COIN, coinHist.Data[0].Currency)
-	s.a.Equal(txconst.DAILY_REWARD, coinHist.Data[0].Type)
-	s.a.Equal(txconst.DAILY_LOGIN, coinHist.Data[0].Source)
-	s.a.Equal(txconst.COMPLETED, coinHist.Data[0].Status)
+	s.a.Equal(string(currency.COIN), coinHist.Data[0].Currency)
+	s.a.Equal(string(txconst.DAILY_REWARD), coinHist.Data[0].Type)
+	s.a.Equal(string(txconst.DAILY_LOGIN), coinHist.Data[0].Source)
+	s.a.Equal(string(txconst.COMPLETED), coinHist.Data[0].Status)
 
 	// Filter by type=AD_WATCH
 	adWatchHist, adCode, err := httputil.RequestHTTP[response.GeneralResponse[[]response.BalanceTransactionResponse]](s.e, http.MethodGet, "/api/v1/users/balances/history?currency=SPIN&type=AD_WATCH", &token, nil)
 	s.r.NoError(err)
 	s.r.Equal(http.StatusOK, adCode)
 	s.a.GreaterOrEqual(len(adWatchHist.Data), 1)
-	s.a.Equal(currency.SPIN, adWatchHist.Data[0].Currency)
-	s.a.Equal(txconst.AD_WATCH, adWatchHist.Data[0].Type)
-	s.a.Equal(txconst.VIDEO_AD, adWatchHist.Data[0].Source)
-	s.a.Equal(txconst.COMPLETED, adWatchHist.Data[0].Status)
+	s.a.Equal(string(currency.SPIN), adWatchHist.Data[0].Currency)
+	s.a.Equal(string(txconst.AD_WATCH), adWatchHist.Data[0].Type)
+	s.a.Equal(string(txconst.VIDEO_AD), adWatchHist.Data[0].Source)
+	s.a.Equal(string(txconst.COMPLETED), adWatchHist.Data[0].Status)
 
 	// Filter by type=AD_WATCH and currency=COIN, should return empty
 	completedHist, completedCode, err := httputil.RequestHTTP[response.GeneralResponse[[]response.BalanceTransactionResponse]](s.e, http.MethodGet, "/api/v1/users/balances/history?currency=COIN&type=AD_WATCH", &token, nil)

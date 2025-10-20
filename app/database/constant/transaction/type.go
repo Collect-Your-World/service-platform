@@ -1,12 +1,10 @@
 package transaction
 
-// Type represents the type of transaction
-// @Description Transaction type for balance changes
-type Type string
+type TransactionType string
 
 const (
-	DAILY_REWARD Type = "DAILY_REWARD"
-	AD_WATCH     Type = "AD_WATCH"
-	PURCHASE     Type = "PURCHASE"
-	SPIN_USE     Type = "SPIN_USE"
+	DAILY_REWARD TransactionType = "DAILY_REWARD"
+	AD_WATCH     TransactionType = "AD_WATCH"
+	PURCHASE     TransactionType = "PURCHASE"
+	SPIN_USE     TransactionType = "SPIN_USE"
 )

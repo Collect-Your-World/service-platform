@@ -11,10 +11,10 @@ import (
 )
 
 type UserBalanceManager interface {
-	RecordChange(ctx context.Context, userID uuid.UUID, cur currency.Currency, delta int64, txType txconst.Type, source txconst.Source, status txconst.Status) (*entity.UserBalance, *entity.UserBalanceTransaction, error)
+	RecordChange(ctx context.Context, userID uuid.UUID, cur currency.Currency, delta int64, txType txconst.TransactionType, source txconst.Source, status txconst.Status) (*entity.UserBalance, *entity.UserBalanceTransaction, error)
 	GetAllBalances(ctx context.Context, userID uuid.UUID) (map[string]int64, error)
 	GetBalanceByCurrency(ctx context.Context, userID uuid.UUID, cur currency.Currency) (map[string]int64, error)
-	GetHistory(ctx context.Context, userID uuid.UUID, _currency *currency.Currency, _type *txconst.Type) ([]entity.UserBalanceTransaction, error)
+	GetHistory(ctx context.Context, userID uuid.UUID, _currency *currency.Currency, _type *txconst.TransactionType) ([]entity.UserBalanceTransaction, error)
 }
 
 type DefaultUserBalanceManager struct {
@@ -26,7 +26,7 @@ func NewUserBalanceManager(balances repository.UserBalanceRepository, txs reposi
 	return &DefaultUserBalanceManager{balancesRepo: balances, transactionsRepo: txs}
 }
 
-func (m *DefaultUserBalanceManager) RecordChange(ctx context.Context, userID uuid.UUID, cur currency.Currency, delta int64, txType txconst.Type, source txconst.Source, status txconst.Status) (*entity.UserBalance, *entity.UserBalanceTransaction, error) {
+func (m *DefaultUserBalanceManager) RecordChange(ctx context.Context, userID uuid.UUID, cur currency.Currency, delta int64, txType txconst.TransactionType, source txconst.Source, status txconst.Status) (*entity.UserBalance, *entity.UserBalanceTransaction, error) {
 	updatedBalance, err := m.balancesRepo.UpsertAndAddDelta(ctx, userID, cur, delta)
 	if err != nil {
 		return nil, nil, err
@@ -68,6 +68,6 @@ func (m *DefaultUserBalanceManager) GetBalanceByCurrency(ctx context.Context, us
 	return map[string]int64{string(cur): ub.Balance}, nil
 }
 
-func (m *DefaultUserBalanceManager) GetHistory(ctx context.Context, userID uuid.UUID, _currency *currency.Currency, _type *txconst.Type) ([]entity.UserBalanceTransaction, error) {
+func (m *DefaultUserBalanceManager) GetHistory(ctx context.Context, userID uuid.UUID, _currency *currency.Currency, _type *txconst.TransactionType) ([]entity.UserBalanceTransaction, error) {
 	return m.transactionsRepo.ListByUser(ctx, userID, _currency, _type)
 }

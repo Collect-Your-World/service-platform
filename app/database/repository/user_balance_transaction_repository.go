@@ -12,7 +12,7 @@ import (
 
 type UserBalanceTransactionRepository interface {
 	Create(ctx context.Context, tx *entity.UserBalanceTransaction) (*entity.UserBalanceTransaction, error)
-	ListByUser(ctx context.Context, userID uuid.UUID, _currency *currency.Currency, _type *txconst.Type) ([]entity.UserBalanceTransaction, error)
+	ListByUser(ctx context.Context, userID uuid.UUID, _currency *currency.Currency, _type *txconst.TransactionType) ([]entity.UserBalanceTransaction, error)
 }
 
 type DefaultUserBalanceTransactionRepository struct {
@@ -31,7 +31,7 @@ func (r *DefaultUserBalanceTransactionRepository) Create(ctx context.Context, t 
 	return t, nil
 }
 
-func (r *DefaultUserBalanceTransactionRepository) ListByUser(ctx context.Context, userID uuid.UUID, _currency *currency.Currency, _type *txconst.Type) ([]entity.UserBalanceTransaction, error) {
+func (r *DefaultUserBalanceTransactionRepository) ListByUser(ctx context.Context, userID uuid.UUID, _currency *currency.Currency, _type *txconst.TransactionType) ([]entity.UserBalanceTransaction, error) {
 	var items []entity.UserBalanceTransaction
 	q := r.res.DB.ReplicaNewSelect().Model(&items).
 		Where("user_id = ?", userID).

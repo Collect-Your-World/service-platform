@@ -102,9 +102,9 @@ func (c *UserController) GetBalanceHistory(ec echo.Context) error {
 	}
 
 	// Convert string type to typed enum if provided
-	var typedTypePtr *txconst.Type
+	var typedTypePtr *txconst.TransactionType
 	if typePtr != nil {
-		tt := txconst.Type(*typePtr)
+		tt := txconst.TransactionType(*typePtr)
 		typedTypePtr = &tt
 	}
 
@@ -117,10 +117,10 @@ func (c *UserController) GetBalanceHistory(ec echo.Context) error {
 		dtos = append(dtos, response.BalanceTransactionResponse{
 			ID:        it.ID,
 			Amount:    it.Amount,
-			Currency:  it.Currency,
-			Type:      it.Type,
-			Source:    it.Source,
-			Status:    it.Status,
+			Currency:  string(it.Currency),
+			Type:      string(it.Type),
+			Source:    string(it.Source),
+			Status:    string(it.Status),
 			CreatedAt: it.CreatedAt,
 		})
 	}
