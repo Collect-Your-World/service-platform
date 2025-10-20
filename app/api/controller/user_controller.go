@@ -70,7 +70,7 @@ func (c *UserController) GetBalances(ec echo.Context) error {
 //	@Accept			json
 //	@Produce		json
 //	@Param			currency	query	string	true	"Currency" 	Enums(COIN,SPIN)
-//	@Param			type		query	string	false	"Transaction type"
+//	@Param			type		query	string	false	"Transaction type" 	Enums(DAILY_REWARD,AD_WATCH,PURCHASE,SPIN_USE)
 //	@Success		200		{array}		response.BalanceTransactionResponse
 //	@Failure		400
 //	@Failure		401

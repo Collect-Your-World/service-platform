@@ -1,5 +1,7 @@
 package transaction
 
+// Source represents the source of transaction
+// @Description Transaction source for balance changes
 type Source string
 
 const (

@@ -1,5 +1,7 @@
 package transaction
 
+// Type represents the type of transaction
+// @Description Transaction type for balance changes
 type Type string
 
 const (
