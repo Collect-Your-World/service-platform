@@ -9,8 +9,9 @@ import (
 )
 
 type Managers struct {
-	AuthManager AuthManager
-	JobManager  JobManager
+	AuthManager        AuthManager
+	JobManager         JobManager
+	UserBalanceManager UserBalanceManager
 }
 
 func NewManagers(
@@ -30,7 +31,8 @@ func NewManagers(
 	jobManager := NewJobManager(repositories.JobRepository, redisQueue, res.Logger)
 
 	return &Managers{
-		AuthManager: NewAuthManager(res, hasher, jwtManager, repositories),
-		JobManager:  jobManager,
+		AuthManager:        NewAuthManager(res, hasher, jwtManager, repositories),
+		JobManager:         jobManager,
+		UserBalanceManager: NewUserBalanceManager(repositories.UserBalanceRepository, repositories.UserBalanceTransactionRepository),
 	}
 }

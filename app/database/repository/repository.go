@@ -5,15 +5,19 @@ import (
 )
 
 type Repositories struct {
-	UserRepository    UserRepository
-	SessionRepository SessionRepository
-	JobRepository     JobRepository
+	UserRepository                   UserRepository
+	SessionRepository                SessionRepository
+	JobRepository                    JobRepository
+	UserBalanceRepository            UserBalanceRepository
+	UserBalanceTransactionRepository UserBalanceTransactionRepository
 }
 
 func NewRepositories(res runtime.Resource) *Repositories {
 	return &Repositories{
-		UserRepository:    NewUserRepository(res),
-		SessionRepository: NewSessionRepository(res),
-		JobRepository:     NewJobRepository(res),
+		UserRepository:                   NewUserRepository(res),
+		SessionRepository:                NewSessionRepository(res),
+		JobRepository:                    NewJobRepository(res),
+		UserBalanceRepository:            NewUserBalanceRepository(res),
+		UserBalanceTransactionRepository: NewUserBalanceTransactionRepository(res),
 	}
 }

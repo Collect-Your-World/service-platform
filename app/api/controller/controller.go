@@ -8,11 +8,13 @@ import (
 type Controllers struct {
 	AuthController   *AuthController
 	HealthController *HealthController
+	UserController   *UserController
 }
 
 func NewControllers(managers *manager.Managers, res runtime.Resource) *Controllers {
 	return &Controllers{
 		AuthController:   NewAuthController(managers, res),
 		HealthController: NewHealthController(managers, res),
+		UserController:   NewUserController(managers, res),
 	}
 }
