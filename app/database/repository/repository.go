@@ -10,6 +10,8 @@ type Repositories struct {
 	JobRepository                    JobRepository
 	UserBalanceRepository            UserBalanceRepository
 	UserBalanceTransactionRepository UserBalanceTransactionRepository
+	RewardRepository                 RewardRepository
+	UserRewardRepository             UserRewardRepository
 }
 
 func NewRepositories(res runtime.Resource) *Repositories {
@@ -19,5 +21,7 @@ func NewRepositories(res runtime.Resource) *Repositories {
 		JobRepository:                    NewJobRepository(res),
 		UserBalanceRepository:            NewUserBalanceRepository(res),
 		UserBalanceTransactionRepository: NewUserBalanceTransactionRepository(res),
+		RewardRepository:                 NewRewardRepository(res),
+		UserRewardRepository:             NewUserRewardRepository(res),
 	}
 }
