@@ -12,6 +12,7 @@ type Managers struct {
 	AuthManager        AuthManager
 	JobManager         JobManager
 	UserBalanceManager UserBalanceManager
+	CollectionManager  CollectionManager
 }
 
 func NewManagers(
@@ -34,5 +35,6 @@ func NewManagers(
 		AuthManager:        NewAuthManager(res, hasher, jwtManager, repositories),
 		JobManager:         jobManager,
 		UserBalanceManager: NewUserBalanceManager(repositories.UserBalanceRepository, repositories.UserBalanceTransactionRepository),
+		CollectionManager:  NewCollectionManager(res.DB, repositories.CollectionRepository, repositories.CollectionItemRepository),
 	}
 }
