@@ -9,10 +9,12 @@ import (
 )
 
 type Managers struct {
-	AuthManager        AuthManager
-	JobManager         JobManager
-	UserBalanceManager UserBalanceManager
-	CollectionManager  CollectionManager
+	AuthManager         AuthManager
+	JobManager          JobManager
+	UserBalanceManager  UserBalanceManager
+	CollectionManager   CollectionManager
+	ItemManager         ItemManager
+	RarityConfigManager RarityConfigManager
 }
 
 func NewManagers(
@@ -32,9 +34,11 @@ func NewManagers(
 	jobManager := NewJobManager(repositories.JobRepository, redisQueue, res.Logger)
 
 	return &Managers{
-		AuthManager:        NewAuthManager(res, hasher, jwtManager, repositories),
-		JobManager:         jobManager,
-		UserBalanceManager: NewUserBalanceManager(repositories.UserBalanceRepository, repositories.UserBalanceTransactionRepository),
-		CollectionManager:  NewCollectionManager(res.DB, repositories.CollectionRepository, repositories.CollectionItemRepository),
+		AuthManager:         NewAuthManager(res, hasher, jwtManager, repositories),
+		JobManager:          jobManager,
+		UserBalanceManager:  NewUserBalanceManager(repositories.UserBalanceRepository, repositories.UserBalanceTransactionRepository),
+		CollectionManager:   NewCollectionManager(res.DB, repositories.CollectionRepository, repositories.CollectionItemRepository),
+		ItemManager:         NewItemManager(res.DB, repositories.ItemRepository),
+		RarityConfigManager: NewRarityConfigManager(repositories.RarityConfigRepository),
 	}
 }

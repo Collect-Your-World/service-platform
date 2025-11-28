@@ -12,6 +12,8 @@ type Repositories struct {
 	UserBalanceTransactionRepository UserBalanceTransactionRepository
 	CollectionRepository             CollectionRepository
 	CollectionItemRepository         CollectionItemRepository
+	ItemRepository                   ItemRepository
+	RarityConfigRepository           RarityConfigRepository
 }
 
 func NewRepositories(res runtime.Resource) *Repositories {
@@ -23,5 +25,7 @@ func NewRepositories(res runtime.Resource) *Repositories {
 		UserBalanceTransactionRepository: NewUserBalanceTransactionRepository(res),
 		CollectionRepository:             NewCollectionRepository(res),
 		CollectionItemRepository:         NewCollectionItemRepository(res),
+		ItemRepository:                   NewItemRepository(res),
+		RarityConfigRepository:           NewRarityConfigRepository(res),
 	}
 }
