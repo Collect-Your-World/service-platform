@@ -66,10 +66,15 @@ jobs:
           slave2-port: 30005
           slave3-port: 30006
 
+      # LocalStack recent images expect LOCALSTACK_AUTH_TOKEN (repo secret) or, during the grace window,
+      # LOCALSTACK_ACKNOWLEDGE_ACCOUNT_REQUIREMENT=1. See https://docs.localstack.cloud
       - name: Start LocalStack
         uses: LocalStack/setup-localstack@v0.2.3
         with:
           image-tag: 'latest'
+          use-pro: 'false'
+        env:
+          LOCALSTACK_ACKNOWLEDGE_ACCOUNT_REQUIREMENT: '1'
 
       - name: Install swag
         run: go install github.com/swaggo/swag/cmd/swag@latest
