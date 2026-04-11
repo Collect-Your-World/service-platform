@@ -66,10 +66,16 @@ jobs:
           slave2-port: 30005
           slave3-port: 30006
 
+      # LocalStack: set repo secret LOCALSTACK_AUTH_TOKEN (https://app.localstack.cloud → Auth Tokens).
+      # Acknowledgement remains as fallback when the secret is unset (e.g. some fork PRs).
       - name: Start LocalStack
         uses: LocalStack/setup-localstack@v0.2.3
         with:
           image-tag: 'latest'
+          use-pro: 'false'
+        env:
+          LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
+          LOCALSTACK_ACKNOWLEDGE_ACCOUNT_REQUIREMENT: '1'
 
       - name: Install swag
         run: go install github.com/swaggo/swag/cmd/swag@latest

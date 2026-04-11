@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"backend/service-platform/app/api/client/request"
-	"backend/service-platform/app/api/client/response"
-	"backend/service-platform/app/database/constant/role"
-	"backend/service-platform/app/manager"
+	"backend/service-platform/app/internal/auth/constants/role"
+	authmanagers "backend/service-platform/app/internal/auth/managers"
+	authmodels "backend/service-platform/app/internal/auth/models"
+	commonmodels "backend/service-platform/app/internal/common/models"
 	mocks "backend/service-platform/app/test/mocks/managers"
 	httputil "backend/service-platform/app/test/util"
 
@@ -44,7 +44,7 @@ func (s *AuthControllerSuite) TestRegister_Success() {
 	m := mocks.NewMockAuthManager(s.T())
 	s.managers.AuthManager = m
 
-	req := request.RegisterRequest{
+	req := authmodels.RegisterRequest{
 		Email:    "newuser@example.com",
 		Password: "password123",
 	}
@@ -52,7 +52,7 @@ func (s *AuthControllerSuite) TestRegister_Success() {
 	m.EXPECT().Register(mock.Anything, req).Return(nil)
 
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[string]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[string]](
 		s.e,
 		http.MethodPost,
 		RegisterEndpoint,
@@ -72,15 +72,15 @@ func (s *AuthControllerSuite) TestRegister_EmailAlreadyExists() {
 	m := mocks.NewMockAuthManager(s.T())
 	s.managers.AuthManager = m
 
-	req := request.RegisterRequest{
+	req := authmodels.RegisterRequest{
 		Email:    "existing@example.com",
 		Password: "password123",
 	}
 
-	m.EXPECT().Register(mock.Anything, req).Return(manager.ErrEmailAlreadyExists)
+	m.EXPECT().Register(mock.Anything, req).Return(authmanagers.ErrEmailAlreadyExists)
 
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodPost,
 		RegisterEndpoint,
@@ -97,13 +97,13 @@ func (s *AuthControllerSuite) TestRegister_EmailAlreadyExists() {
 
 func (s *AuthControllerSuite) TestRegister_InvalidEmail() {
 	// Arrange
-	req := request.RegisterRequest{
+	req := authmodels.RegisterRequest{
 		Email:    "invalid-email",
 		Password: "password123",
 	}
 
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodPost,
 		RegisterEndpoint,
@@ -120,13 +120,13 @@ func (s *AuthControllerSuite) TestRegister_InvalidEmail() {
 
 func (s *AuthControllerSuite) TestRegister_ShortPassword() {
 	// Arrange
-	req := request.RegisterRequest{
+	req := authmodels.RegisterRequest{
 		Email:    "user@example.com",
 		Password: "short",
 	}
 
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodPost,
 		RegisterEndpoint,
@@ -148,13 +148,13 @@ func (s *AuthControllerSuite) TestLogin_Success() {
 	m := mocks.NewMockAuthManager(s.T())
 	s.managers.AuthManager = m
 
-	req := request.AuthUserRequest{
+	req := authmodels.AuthUserRequest{
 		Email:    "test@example.com",
 		Password: "password123",
 	}
 
 	username := "test@example.com"
-	expectedResponse := &response.AuthResponse{
+	expectedResponse := &authmodels.AuthResponse{
 		Username:     &username,
 		AccessToken:  "access_token_123",
 		RefreshToken: "refresh_token_456",
@@ -165,7 +165,7 @@ func (s *AuthControllerSuite) TestLogin_Success() {
 	m.EXPECT().Login(mock.Anything, req).Return(expectedResponse, nil)
 
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[response.AuthResponse]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[authmodels.AuthResponse]](
 		s.e,
 		http.MethodPost,
 		LoginEndpoint,
@@ -195,16 +195,16 @@ func (s *AuthControllerSuite) TestLogin_InvalidCredentials() {
 	m := mocks.NewMockAuthManager(s.T())
 	s.managers.AuthManager = m
 
-	req := request.AuthUserRequest{
+	req := authmodels.AuthUserRequest{
 		Email:    "test@example.com",
 		Password: "wrongpassword",
 	}
 
-	expectedError := manager.ErrInvalidCredentials
+	expectedError := authmanagers.ErrInvalidCredentials
 	m.EXPECT().Login(mock.Anything, req).Return(nil, expectedError)
 
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodPost,
 		LoginEndpoint,
@@ -226,7 +226,7 @@ func (s *AuthControllerSuite) TestLogin_InvalidRequestBody() {
 	}
 
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodPost,
 		LoginEndpoint,
@@ -243,13 +243,13 @@ func (s *AuthControllerSuite) TestLogin_InvalidRequestBody() {
 
 func (s *AuthControllerSuite) TestLogin_EmptyEmail() {
 	// Arrange
-	req := request.AuthUserRequest{
+	req := authmodels.AuthUserRequest{
 		Email:    "",
 		Password: "password123",
 	}
 
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodPost,
 		LoginEndpoint,
@@ -266,13 +266,13 @@ func (s *AuthControllerSuite) TestLogin_EmptyEmail() {
 
 func (s *AuthControllerSuite) TestLogin_EmptyPassword() {
 	// Arrange
-	req := request.AuthUserRequest{
+	req := authmodels.AuthUserRequest{
 		Email:    "test@example.com",
 		Password: "",
 	}
 
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodPost,
 		LoginEndpoint,
@@ -292,7 +292,7 @@ func (s *AuthControllerSuite) TestLogin_DatabaseError() {
 	m := mocks.NewMockAuthManager(s.T())
 	s.managers.AuthManager = m
 
-	req := request.AuthUserRequest{
+	req := authmodels.AuthUserRequest{
 		Email:    "test@example.com",
 		Password: "password123",
 	}
@@ -301,7 +301,7 @@ func (s *AuthControllerSuite) TestLogin_DatabaseError() {
 	m.EXPECT().Login(mock.Anything, req).Return(nil, expectedError)
 
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodPost,
 		LoginEndpoint,
@@ -323,12 +323,12 @@ func (s *AuthControllerSuite) TestRefreshToken_Success() {
 	m := mocks.NewMockAuthManager(s.T())
 	s.managers.AuthManager = m
 
-	req := request.RefreshTokenRequest{
+	req := authmodels.RefreshTokenRequest{
 		RefreshToken: "valid_refresh_token",
 	}
 
 	username := "test@example.com"
-	expectedResponse := &response.AuthResponse{
+	expectedResponse := &authmodels.AuthResponse{
 		Username:     &username,
 		AccessToken:  "new_access_token_123",
 		RefreshToken: "new_refresh_token_456",
@@ -341,7 +341,7 @@ func (s *AuthControllerSuite) TestRefreshToken_Success() {
 	// Seed cookie as client would send
 	httputil.SetCookie("refresh_token", req.RefreshToken, 3600)
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[response.AuthResponse]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[authmodels.AuthResponse]](
 		s.e,
 		http.MethodPost,
 		RefreshTokenEndpoint,
@@ -369,17 +369,17 @@ func (s *AuthControllerSuite) TestRefreshToken_InvalidToken() {
 	m := mocks.NewMockAuthManager(s.T())
 	s.managers.AuthManager = m
 
-	req := request.RefreshTokenRequest{
+	req := authmodels.RefreshTokenRequest{
 		RefreshToken: "invalid_refresh_token",
 	}
 
-	expectedError := manager.ErrInvalidRefreshToken
+	expectedError := authmanagers.ErrInvalidRefreshToken
 	m.EXPECT().RefreshToken(mock.Anything, req).Return(nil, expectedError)
 
 	// Seed cookie
 	httputil.SetCookie("refresh_token", req.RefreshToken, 3600)
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodPost,
 		RefreshTokenEndpoint,
@@ -391,7 +391,7 @@ func (s *AuthControllerSuite) TestRefreshToken_InvalidToken() {
 	s.r.NoError(err)
 	s.r.Equal(http.StatusUnauthorized, code)
 	s.r.Equal(http.StatusUnauthorized, resp.Code)
-	s.r.Equal(manager.ErrInvalidRefreshToken.Error(), resp.Message)
+	s.r.Equal(authmanagers.ErrInvalidRefreshToken.Error(), resp.Message)
 }
 
 func (s *AuthControllerSuite) TestRefreshToken_RevokedToken() {
@@ -399,17 +399,17 @@ func (s *AuthControllerSuite) TestRefreshToken_RevokedToken() {
 	m := mocks.NewMockAuthManager(s.T())
 	s.managers.AuthManager = m
 
-	req := request.RefreshTokenRequest{
+	req := authmodels.RefreshTokenRequest{
 		RefreshToken: "revoked_refresh_token",
 	}
 
-	expectedError := manager.ErrRefreshTokenRevoked
+	expectedError := authmanagers.ErrRefreshTokenRevoked
 	m.EXPECT().RefreshToken(mock.Anything, req).Return(nil, expectedError)
 
 	// Seed cookie
 	httputil.SetCookie("refresh_token", req.RefreshToken, 3600)
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodPost,
 		RefreshTokenEndpoint,
@@ -421,7 +421,7 @@ func (s *AuthControllerSuite) TestRefreshToken_RevokedToken() {
 	s.r.NoError(err)
 	s.r.Equal(http.StatusUnauthorized, code)
 	s.r.Equal(http.StatusUnauthorized, resp.Code)
-	s.r.Equal(manager.ErrRefreshTokenRevoked.Error(), resp.Message)
+	s.r.Equal(authmanagers.ErrRefreshTokenRevoked.Error(), resp.Message)
 }
 
 func (s *AuthControllerSuite) TestRefreshToken_ExpiredToken() {
@@ -429,17 +429,17 @@ func (s *AuthControllerSuite) TestRefreshToken_ExpiredToken() {
 	m := mocks.NewMockAuthManager(s.T())
 	s.managers.AuthManager = m
 
-	req := request.RefreshTokenRequest{
+	req := authmodels.RefreshTokenRequest{
 		RefreshToken: "expired_refresh_token",
 	}
 
-	expectedError := manager.ErrRefreshTokenExpired
+	expectedError := authmanagers.ErrRefreshTokenExpired
 	m.EXPECT().RefreshToken(mock.Anything, req).Return(nil, expectedError)
 
 	// Seed cookie
 	httputil.SetCookie("refresh_token", req.RefreshToken, 1)
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodPost,
 		RefreshTokenEndpoint,
@@ -451,19 +451,19 @@ func (s *AuthControllerSuite) TestRefreshToken_ExpiredToken() {
 	s.r.NoError(err)
 	s.r.Equal(http.StatusUnauthorized, code)
 	s.r.Equal(http.StatusUnauthorized, resp.Code)
-	s.r.Equal(manager.ErrRefreshTokenExpired.Error(), resp.Message)
+	s.r.Equal(authmanagers.ErrRefreshTokenExpired.Error(), resp.Message)
 }
 
 func (s *AuthControllerSuite) TestRefreshToken_EmptyToken() {
 	// Arrange
-	req := request.RefreshTokenRequest{
+	req := authmodels.RefreshTokenRequest{
 		RefreshToken: "",
 	}
 
 	// Ensure no cookie
 	httputil.ClearCookies()
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodPost,
 		RefreshTokenEndpoint,
@@ -483,7 +483,7 @@ func (s *AuthControllerSuite) TestRefreshToken_DatabaseError() {
 	m := mocks.NewMockAuthManager(s.T())
 	s.managers.AuthManager = m
 
-	req := request.RefreshTokenRequest{
+	req := authmodels.RefreshTokenRequest{
 		RefreshToken: "valid_refresh_token",
 	}
 
@@ -493,7 +493,7 @@ func (s *AuthControllerSuite) TestRefreshToken_DatabaseError() {
 	// Seed cookie
 	httputil.SetCookie("refresh_token", req.RefreshToken, 3600)
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodPost,
 		RefreshTokenEndpoint,
@@ -515,7 +515,7 @@ func (s *AuthControllerSuite) TestLogout_Success() {
 	m := mocks.NewMockAuthManager(s.T())
 	s.managers.AuthManager = m
 
-	req := request.LogoutRequest{
+	req := authmodels.LogoutRequest{
 		RefreshToken: "valid_refresh_token",
 	}
 
@@ -524,7 +524,7 @@ func (s *AuthControllerSuite) TestLogout_Success() {
 	// Seed cookie
 	httputil.SetCookie("refresh_token", req.RefreshToken, 3600)
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[string]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[string]](
 		s.e,
 		http.MethodPost,
 		LogoutEndpoint,
@@ -544,7 +544,7 @@ func (s *AuthControllerSuite) TestLogout_InvalidToken() {
 	m := mocks.NewMockAuthManager(s.T())
 	s.managers.AuthManager = m
 
-	req := request.LogoutRequest{
+	req := authmodels.LogoutRequest{
 		RefreshToken: "invalid_refresh_token",
 	}
 
@@ -554,7 +554,7 @@ func (s *AuthControllerSuite) TestLogout_InvalidToken() {
 	// Seed cookie
 	httputil.SetCookie("refresh_token", req.RefreshToken, 3600)
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodPost,
 		LogoutEndpoint,
@@ -571,14 +571,14 @@ func (s *AuthControllerSuite) TestLogout_InvalidToken() {
 
 func (s *AuthControllerSuite) TestLogout_EmptyToken() {
 	// Arrange
-	req := request.LogoutRequest{
+	req := authmodels.LogoutRequest{
 		RefreshToken: "",
 	}
 
 	// Ensure no cookie
 	httputil.ClearCookies()
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodPost,
 		LogoutEndpoint,
@@ -598,7 +598,7 @@ func (s *AuthControllerSuite) TestLogout_DatabaseError() {
 	m := mocks.NewMockAuthManager(s.T())
 	s.managers.AuthManager = m
 
-	req := request.LogoutRequest{
+	req := authmodels.LogoutRequest{
 		RefreshToken: "valid_refresh_token",
 	}
 
@@ -608,7 +608,7 @@ func (s *AuthControllerSuite) TestLogout_DatabaseError() {
 	// Seed cookie
 	httputil.SetCookie("refresh_token", req.RefreshToken, 3600)
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodPost,
 		LogoutEndpoint,
@@ -642,7 +642,7 @@ func (s *AuthControllerSuite) TestMe_Success() {
 	s.r.NoError(err)
 
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[response.MeResponse]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[authmodels.MeResponse]](
 		s.e,
 		http.MethodGet,
 		MeEndpoint,
@@ -665,7 +665,7 @@ func (s *AuthControllerSuite) TestMe_Success() {
 
 func (s *AuthControllerSuite) TestMe_MissingAuthorization() {
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodGet,
 		MeEndpoint,
@@ -684,7 +684,7 @@ func (s *AuthControllerSuite) TestMe_InvalidToken() {
 	invalidToken := "invalid.jwt.token"
 
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodGet,
 		MeEndpoint,
@@ -705,13 +705,13 @@ func (s *AuthControllerSuite) TestLogin_SpecialCharactersInPassword() {
 	m := mocks.NewMockAuthManager(s.T())
 	s.managers.AuthManager = m
 
-	req := request.AuthUserRequest{
+	req := authmodels.AuthUserRequest{
 		Email:    "test@example.com",
 		Password: "P@ssw0rd!@#$%^&*()",
 	}
 
 	username := "test@example.com"
-	expectedResponse := &response.AuthResponse{
+	expectedResponse := &authmodels.AuthResponse{
 		Username:     &username,
 		AccessToken:  "access_token_special",
 		RefreshToken: "refresh_token_special",
@@ -722,7 +722,7 @@ func (s *AuthControllerSuite) TestLogin_SpecialCharactersInPassword() {
 	m.EXPECT().Login(mock.Anything, req).Return(expectedResponse, nil)
 
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[response.AuthResponse]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[authmodels.AuthResponse]](
 		s.e,
 		http.MethodPost,
 		LoginEndpoint,
@@ -743,12 +743,12 @@ func (s *AuthControllerSuite) TestRefreshToken_ValidRequestWithLongToken() {
 	s.managers.AuthManager = m
 
 	longToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
-	req := request.RefreshTokenRequest{
+	req := authmodels.RefreshTokenRequest{
 		RefreshToken: longToken,
 	}
 
 	username := "test@example.com"
-	expectedResponse := &response.AuthResponse{
+	expectedResponse := &authmodels.AuthResponse{
 		Username:     &username,
 		AccessToken:  "new_access_token",
 		RefreshToken: "new_refresh_token",
@@ -761,7 +761,7 @@ func (s *AuthControllerSuite) TestRefreshToken_ValidRequestWithLongToken() {
 	// Seed cookie as client would send
 	httputil.SetCookie("refresh_token", longToken, 3600)
 	// Act
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[response.AuthResponse]](
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[authmodels.AuthResponse]](
 		s.e,
 		http.MethodPost,
 		RefreshTokenEndpoint,

@@ -2,8 +2,8 @@ package service_test
 
 import (
 	"backend/service-platform/app/internal/config"
+	worker "backend/service-platform/app/internal/worker"
 	"backend/service-platform/app/pkg/sqs"
-	"backend/service-platform/app/service"
 	"testing"
 	"time"
 
@@ -112,7 +112,7 @@ func TestSQSListenerConfig(t *testing.T) {
 	}
 
 	// Test SQS listener config creation
-	listenerConfig := service.SQSListenerConfig{
+	listenerConfig := worker.SQSListenerConfig{
 		SQSConfig: sqsConfig,
 		QueueURLs: []string{}, // Empty means use all configured queues
 	}

@@ -1,15 +1,18 @@
 package integration
 
 import (
-	service "backend/service-platform/app/service"
 	"context"
 	"database/sql"
 	"time"
 
-	"backend/service-platform/app/api/controller"
-	"backend/service-platform/app/api/middleware"
-	"backend/service-platform/app/internal/validator"
-	"backend/service-platform/app/manager"
+	appmanagers "backend/service-platform/app/internal/managers"
+	platctrl "backend/service-platform/app/internal/platform/controllers"
+	echomw "backend/service-platform/app/internal/platform/middleware"
+	"backend/service-platform/app/internal/platform/router"
+	"backend/service-platform/app/internal/platform/runtime"
+	"backend/service-platform/app/internal/platform/validator"
+	"backend/service-platform/app/internal/repository"
+	worker "backend/service-platform/app/internal/worker"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -17,10 +20,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
-	"backend/service-platform/app/api/router"
-	"backend/service-platform/app/database/repository"
 	"backend/service-platform/app/internal/config"
-	"backend/service-platform/app/internal/runtime"
 	"backend/service-platform/app/pkg/db"
 	"backend/service-platform/app/pkg/logging"
 	"backend/service-platform/app/pkg/redis"
@@ -36,8 +36,8 @@ type RouterSuite struct {
 	e            *echo.Echo
 	ctx          context.Context
 	repositories *repository.Repositories
-	services     *service.Services
-	managers     *manager.Managers
+	services     *worker.Services
+	managers     *appmanagers.Managers
 	suiteSetupAt time.Time
 	testSetupAt  time.Time
 }
@@ -68,10 +68,8 @@ func (s *RouterSuite) SetupSuite() {
 		panic(err)
 	}
 
-	// Connect to redis for tests
 	rds, err := redis.NewRedisClusterClient(cfg.RedisConfig, logger)
 	if err != nil {
-		// In test environment, if cluster fails, we might be using single-node Redis
 		logger.Warn("Redis cluster connection failed, this might be expected in test environment", zap.Error(err))
 		panic(err)
 	}
@@ -88,34 +86,29 @@ func (s *RouterSuite) SetupSuite() {
 	repositories := repository.NewRepositories(res)
 	s.repositories = repositories
 
-	// Use worker config from resource
 	workerConfig := res.Config.WorkerConfig
 
-	// Create managers first to get the JobManager
-	tempManagers := manager.NewManagers(res, nil, repositories)
+	tempManagers := appmanagers.NewManagers(res, nil, repositories)
 
-	// Try to create services with job manager to enable SQS listener
-	// Fall back to basic services if SQS is not available (e.g., LocalStack not running)
-	var services *service.Services
+	var services *worker.Services
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
 				res.Logger.Warn("SQS service creation failed, falling back to basic services", zap.Any("error", r))
-				services = service.NewServices(res, workerConfig)
+				services = worker.NewServices(res, workerConfig)
 			}
 		}()
-		services = service.NewServicesWithJobManager(res, workerConfig, tempManagers.JobManager)
+		services = worker.NewServicesWithJobManager(res, workerConfig, tempManagers.JobManager)
 	}()
 	s.services = services
 
-	// Create final managers with services
-	managers := manager.NewManagers(res, services, repositories)
+	managers := appmanagers.NewManagers(res, nil, repositories)
 	s.managers = managers
 
-	controllers := controller.NewControllers(managers, res)
+	controllers := platctrl.NewControllers(managers, res)
 	validators := validator.NewValidators(res)
 
-	middlewares := middleware.NewMiddleware(res)
+	middlewares := echomw.NewMiddleware(res)
 	s.e = router.NewRouter(res, validators, middlewares, controllers, repositories).Echo
 	s.suiteSetupAt = s.startSuiteTimestamp()
 }
@@ -123,12 +116,10 @@ func (s *RouterSuite) SetupSuite() {
 func (s *RouterSuite) TearDownSuite() {
 	s.resource.Logger.Info("Starting integration test cleanup")
 
-	// Clean up all test data from database
 	if err := s.cleanAllTestData(); err != nil {
 		s.resource.Logger.Error("Failed to clean database in test teardown", zap.Error(err))
 	}
 
-	// Clean up Redis
 	if s.resource.Redis != nil {
 		s.cleanRedis()
 		if err := s.resource.Redis.Close(); err != nil {
@@ -136,7 +127,6 @@ func (s *RouterSuite) TearDownSuite() {
 		}
 	}
 
-	// Close database connections
 	if s.resource.DB != nil {
 		if err := s.resource.DB.Close(); err != nil {
 			s.resource.Logger.Error("Failed to close database connection in test teardown", zap.Error(err))
@@ -209,11 +199,9 @@ func (s *RouterSuite) cleanDBAt(timestamp time.Time) error {
 	return nil
 }
 
-// cleanAllTestData removes all test data from the database
 func (s *RouterSuite) cleanAllTestData() error {
 	s.resource.Logger.Info("Cleaning all test data from database")
 
-	// Get all tables with created_at column
 	rows, err := s.resource.DB.PrimaryDb.QueryContext(s.ctx, `
 	SELECT t.table_name
 	FROM information_schema.tables t
@@ -237,7 +225,6 @@ func (s *RouterSuite) cleanAllTestData() error {
 		tables = append(tables, table)
 	}
 
-	// Clean each table
 	for _, table := range tables {
 		_, err := s.resource.DB.PrimaryConn().NewDelete().Table(table).Where("created_at >= ?", s.suiteSetupAt).Exec(s.ctx)
 		if err != nil {
@@ -250,13 +237,11 @@ func (s *RouterSuite) cleanAllTestData() error {
 	return nil
 }
 
-// cleanRedis flushes all Redis data
 func (s *RouterSuite) cleanRedis() {
 	s.resource.Logger.Info("Flushing all Redis data")
 
 	ctx := context.Background()
 
-	// Flush all data from Redis
 	if err := s.resource.Redis.Reset(ctx); err != nil {
 		s.resource.Logger.Error("Failed to flush Redis", zap.Error(err))
 	} else {

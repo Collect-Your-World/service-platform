@@ -1,11 +1,11 @@
 package integration
 
 import (
-	collectionconst "backend/service-platform/app/database/constant/collection"
-	"backend/service-platform/app/database/constant/currency"
-	"backend/service-platform/app/database/entity"
-	"backend/service-platform/app/database/repository"
-	"backend/service-platform/app/manager"
+	collectionconst "backend/service-platform/app/internal/collection/constants/collection"
+	"backend/service-platform/app/internal/collection/entities"
+	collmanagers "backend/service-platform/app/internal/collection/managers"
+	collrepo "backend/service-platform/app/internal/collection/repositories"
+	"backend/service-platform/app/internal/user/constants/currency"
 	"context"
 	"testing"
 	"time"
@@ -47,7 +47,7 @@ func (s *CollectionManagerSuite) Test_ListCollections_WithFilters() {
 		{ItemID: uuid.New()},
 	})
 
-	result, err := s.managers.CollectionManager.ListCollections(ctx, manager.ListCollectionsFilter{
+	result, err := s.managers.CollectionManager.ListCollections(ctx, collmanagers.ListCollectionsFilter{
 		Types:            []collectionconst.Type{collectionconst.Theme},
 		RewardCurrencies: []currency.Currency{currency.COIN},
 		IsEnabled:        boolPtr(true),
@@ -57,7 +57,7 @@ func (s *CollectionManagerSuite) Test_ListCollections_WithFilters() {
 	s.a.Equal(colA.ID, result[0].Collection.ID)
 	s.a.Len(result[0].Items, 2)
 
-	byName, err := s.managers.CollectionManager.ListCollections(ctx, manager.ListCollectionsFilter{
+	byName, err := s.managers.CollectionManager.ListCollections(ctx, collmanagers.ListCollectionsFilter{
 		Names: []string{colB.Name},
 	})
 	s.r.NoError(err)
@@ -84,7 +84,7 @@ func (s *CollectionManagerSuite) Test_DeleteCollection_SoftDeletesCascade() {
 	err := s.managers.CollectionManager.DeleteCollection(ctx, col.ID)
 	s.r.NoError(err)
 
-	collections, err := s.repositories.CollectionRepository.List(ctx, repository.CollectionFilter{
+	collections, err := s.repositories.CollectionRepository.List(ctx, collrepo.CollectionFilter{
 		IDs:            []uuid.UUID{col.ID},
 		IncludeDeleted: true,
 	})

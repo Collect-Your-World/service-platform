@@ -5,9 +5,9 @@
 package mocks
 
 import (
-	"backend/service-platform/app/database/constant/currency"
-	"backend/service-platform/app/database/constant/transaction"
-	"backend/service-platform/app/database/entity"
+	"backend/service-platform/app/internal/user/constants/currency"
+	"backend/service-platform/app/internal/user/constants/transaction"
+	"backend/service-platform/app/internal/user/entities"
 	"context"
 
 	"github.com/google/uuid"

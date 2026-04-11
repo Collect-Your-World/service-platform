@@ -38,6 +38,7 @@ services:
     environment:
       - DEBUG=${DEBUG-}
       - DOCKER_HOST=unix:///var/run/docker.sock
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:-}
     volumes:
       - '/var/run/docker.sock:/var/run/docker.sock'
       - '${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack'

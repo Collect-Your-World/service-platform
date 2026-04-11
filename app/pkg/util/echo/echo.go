@@ -9,7 +9,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
 
-	"backend/service-platform/app/internal/runtime"
+	"backend/service-platform/app/internal/platform/runtime"
 )
 
 func SetupCORSMiddleware(res runtime.Resource) echo.MiddlewareFunc {

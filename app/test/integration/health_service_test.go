@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"backend/service-platform/app/api/client/response"
+	commonmodels "backend/service-platform/app/internal/common/models"
 	httputil "backend/service-platform/app/test/util"
 )
 
@@ -23,7 +23,7 @@ func TestHealthServiceSuite(t *testing.T) {
 }
 
 func (s *HealthServiceSuite) TestCheckHealth() {
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[response.HealthResponse]](s.e, http.MethodGet, HealthEndpointK8S, nil, nil)
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[commonmodels.HealthResponse]](s.e, http.MethodGet, HealthEndpointK8S, nil, nil)
 	s.r.NoError(err)
 	s.r.Equal(http.StatusOK, code)
 	s.a.Equal("success", resp.Message)

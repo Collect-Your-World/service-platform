@@ -1,8 +1,8 @@
 package sqs
 
 import (
-	jobconst "backend/service-platform/app/database/constant/job"
-	"backend/service-platform/app/database/entity"
+	jobconst "backend/service-platform/app/internal/job/constants"
+	"backend/service-platform/app/internal/job/entities"
 	"context"
 	"encoding/json"
 	"fmt"

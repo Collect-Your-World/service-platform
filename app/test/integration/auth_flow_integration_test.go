@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"backend/service-platform/app/api/client/request"
-	"backend/service-platform/app/api/client/response"
-	"backend/service-platform/app/database/constant/role"
+	"backend/service-platform/app/internal/auth/constants/role"
+	authmodels "backend/service-platform/app/internal/auth/models"
+	commonmodels "backend/service-platform/app/internal/common/models"
 	httputil "backend/service-platform/app/test/util"
 )
 
@@ -34,12 +34,12 @@ func (s *AuthFlowIntegrationSuite) TestCompleteAuthFlow_Register_Login_Me_Refres
 
 	// Step 1: Register a new user
 	s.T().Log("Step 1: Registering new user")
-	registerReq := request.RegisterRequest{
+	registerReq := authmodels.RegisterRequest{
 		Email:    testEmail,
 		Password: testPassword,
 	}
 
-	registerResp, registerCode, err := httputil.RequestHTTP[response.GeneralResponse[string]](
+	registerResp, registerCode, err := httputil.RequestHTTP[commonmodels.GeneralResponse[string]](
 		s.e,
 		http.MethodPost,
 		"/api/v1/auth/register",
@@ -53,12 +53,12 @@ func (s *AuthFlowIntegrationSuite) TestCompleteAuthFlow_Register_Login_Me_Refres
 
 	// Step 2: Login with the registered user
 	s.T().Log("Step 2: Logging in with registered user")
-	loginReq := request.AuthUserRequest{
+	loginReq := authmodels.AuthUserRequest{
 		Email:    testEmail,
 		Password: testPassword,
 	}
 
-	loginResp, loginCode, err := httputil.RequestHTTP[response.GeneralResponse[response.AuthResponse]](
+	loginResp, loginCode, err := httputil.RequestHTTP[commonmodels.GeneralResponse[authmodels.AuthResponse]](
 		s.e,
 		http.MethodPost,
 		"/api/v1/auth/login",
@@ -81,7 +81,7 @@ func (s *AuthFlowIntegrationSuite) TestCompleteAuthFlow_Register_Login_Me_Refres
 	s.T().Log("Step 3: Getting user profile with access token")
 	accessToken := loginResp.Data.AccessToken
 
-	meResp, meCode, err := httputil.RequestHTTP[response.GeneralResponse[response.MeResponse]](
+	meResp, meCode, err := httputil.RequestHTTP[commonmodels.GeneralResponse[authmodels.MeResponse]](
 		s.e,
 		http.MethodGet,
 		"/api/v1/auth/me",
@@ -100,13 +100,13 @@ func (s *AuthFlowIntegrationSuite) TestCompleteAuthFlow_Register_Login_Me_Refres
 
 	// Step 4: Refresh the token using the refresh token
 	s.T().Log("Step 4: Refreshing access token")
-	refreshReq := request.RefreshTokenRequest{
+	refreshReq := authmodels.RefreshTokenRequest{
 		RefreshToken: rt.Value,
 	}
 
 	// Seed cookie for refresh
 	httputil.SetCookie("refresh_token", rt.Value, 3600)
-	refreshResp, refreshCode, err := httputil.RequestHTTP[response.GeneralResponse[response.AuthResponse]](
+	refreshResp, refreshCode, err := httputil.RequestHTTP[commonmodels.GeneralResponse[authmodels.AuthResponse]](
 		s.e,
 		http.MethodPost,
 		"/api/v1/auth/refresh-token",
@@ -126,7 +126,7 @@ func (s *AuthFlowIntegrationSuite) TestCompleteAuthFlow_Register_Login_Me_Refres
 	s.T().Log("Step 5: Using new access token to get user profile")
 	newAccessToken := refreshResp.Data.AccessToken
 
-	meResp2, meCode2, err := httputil.RequestHTTP[response.GeneralResponse[response.MeResponse]](
+	meResp2, meCode2, err := httputil.RequestHTTP[commonmodels.GeneralResponse[authmodels.MeResponse]](
 		s.e,
 		http.MethodGet,
 		"/api/v1/auth/me",
@@ -143,13 +143,13 @@ func (s *AuthFlowIntegrationSuite) TestCompleteAuthFlow_Register_Login_Me_Refres
 
 	// Step 6: Logout
 	s.T().Log("Step 6: Logging out")
-	logoutReq := request.LogoutRequest{
+	logoutReq := authmodels.LogoutRequest{
 		RefreshToken: rt.Value,
 	}
 
 	// Seed cookie for logout
 	httputil.SetCookie("refresh_token", rt.Value, 3600)
-	logoutResp, logoutCode, err := httputil.RequestHTTP[response.GeneralResponse[string]](
+	logoutResp, logoutCode, err := httputil.RequestHTTP[commonmodels.GeneralResponse[string]](
 		s.e,
 		http.MethodPost,
 		"/api/v1/auth/logout",
@@ -163,7 +163,7 @@ func (s *AuthFlowIntegrationSuite) TestCompleteAuthFlow_Register_Login_Me_Refres
 
 	// Step 7: Verify logout worked by trying to refresh with the same token
 	s.T().Log("Step 7: Verifying logout by attempting to refresh token")
-	refreshAfterLogoutResp, refreshAfterLogoutCode, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	refreshAfterLogoutResp, refreshAfterLogoutCode, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodPost,
 		"/api/v1/auth/refresh-token",
@@ -178,12 +178,12 @@ func (s *AuthFlowIntegrationSuite) TestCompleteAuthFlow_Register_Login_Me_Refres
 // TestAuthFlow_InvalidCredentials tests the error handling in the auth flow
 func (s *AuthFlowIntegrationSuite) TestAuthFlow_InvalidCredentials() {
 	// Test login with invalid credentials
-	loginReq := request.AuthUserRequest{
+	loginReq := authmodels.AuthUserRequest{
 		Email:    "nonexistent@example.com",
 		Password: "wrongpassword",
 	}
 
-	loginResp, loginCode, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	loginResp, loginCode, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodPost,
 		"/api/v1/auth/login",
@@ -201,7 +201,7 @@ func (s *AuthFlowIntegrationSuite) TestAuthFlow_InvalidToken() {
 	// Test /me with invalid token
 	invalidToken := "invalid.jwt.token"
 
-	meResp, meCode, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	meResp, meCode, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodGet,
 		"/api/v1/auth/me",
@@ -219,7 +219,7 @@ func (s *AuthFlowIntegrationSuite) TestAuthFlow_ExpiredToken() {
 	// For now, we'll test with an invalid token format
 	expiredToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE1MTYyMzkwMjJ9.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 
-	meResp, meCode, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	meResp, meCode, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodGet,
 		"/api/v1/auth/me",
@@ -251,12 +251,12 @@ func (s *AuthFlowIntegrationSuite) TestAuthFlow_MultipleUsers() {
 		s.T().Logf("Registering user %d: %s", i+1, user.email)
 
 		// Register
-		registerReq := request.RegisterRequest{
+		registerReq := authmodels.RegisterRequest{
 			Email:    user.email,
 			Password: user.password,
 		}
 
-		registerResp, registerCode, err := httputil.RequestHTTP[response.GeneralResponse[string]](
+		registerResp, registerCode, err := httputil.RequestHTTP[commonmodels.GeneralResponse[string]](
 			s.e,
 			http.MethodPost,
 			"/api/v1/auth/register",
@@ -268,12 +268,12 @@ func (s *AuthFlowIntegrationSuite) TestAuthFlow_MultipleUsers() {
 		s.r.Equal("success", registerResp.Message)
 
 		// Login
-		loginReq := request.AuthUserRequest{
+		loginReq := authmodels.AuthUserRequest{
 			Email:    user.email,
 			Password: user.password,
 		}
 
-		loginResp, loginCode, err := httputil.RequestHTTP[response.GeneralResponse[response.AuthResponse]](
+		loginResp, loginCode, err := httputil.RequestHTTP[commonmodels.GeneralResponse[authmodels.AuthResponse]](
 			s.e,
 			http.MethodPost,
 			"/api/v1/auth/login",
@@ -296,7 +296,7 @@ func (s *AuthFlowIntegrationSuite) TestAuthFlow_MultipleUsers() {
 	for i, user := range users {
 		s.T().Logf("Testing user %d profile access: %s", i+1, user.email)
 
-		meResp, meCode, err := httputil.RequestHTTP[response.GeneralResponse[response.MeResponse]](
+		meResp, meCode, err := httputil.RequestHTTP[commonmodels.GeneralResponse[authmodels.MeResponse]](
 			s.e,
 			http.MethodGet,
 			"/api/v1/auth/me",
@@ -318,7 +318,7 @@ func (s *AuthFlowIntegrationSuite) TestAuthFlow_MultipleUsers() {
 			if i != j {
 				s.T().Logf("Testing user %d cannot access user %d profile", i+1, j+1)
 
-				meResp, meCode, err := httputil.RequestHTTP[response.GeneralResponse[response.MeResponse]](
+				meResp, meCode, err := httputil.RequestHTTP[commonmodels.GeneralResponse[authmodels.MeResponse]](
 					s.e,
 					http.MethodGet,
 					"/api/v1/auth/me",
@@ -340,13 +340,13 @@ func (s *AuthFlowIntegrationSuite) TestAuthFlow_MultipleUsers() {
 	for i, user := range users {
 		s.T().Logf("Testing refresh token for user %d: %s", i+1, user.email)
 
-		refreshReq := request.RefreshTokenRequest{
+		refreshReq := authmodels.RefreshTokenRequest{
 			RefreshToken: refreshTokens[i],
 		}
 
 		// Seed cookie for refresh
 		httputil.SetCookie("refresh_token", refreshReq.RefreshToken, 3600)
-		refreshResp, refreshCode, err := httputil.RequestHTTP[response.GeneralResponse[response.AuthResponse]](
+		refreshResp, refreshCode, err := httputil.RequestHTTP[commonmodels.GeneralResponse[authmodels.AuthResponse]](
 			s.e,
 			http.MethodPost,
 			"/api/v1/auth/refresh-token",
@@ -364,13 +364,13 @@ func (s *AuthFlowIntegrationSuite) TestAuthFlow_MultipleUsers() {
 	for i, user := range users {
 		s.T().Logf("Logging out user %d: %s", i+1, user.email)
 
-		logoutReq := request.LogoutRequest{
+		logoutReq := authmodels.LogoutRequest{
 			RefreshToken: refreshTokens[i],
 		}
 
 		// Seed cookie for logout
 		httputil.SetCookie("refresh_token", refreshTokens[i], 3600)
-		logoutResp, logoutCode, err := httputil.RequestHTTP[response.GeneralResponse[string]](
+		logoutResp, logoutCode, err := httputil.RequestHTTP[commonmodels.GeneralResponse[string]](
 			s.e,
 			http.MethodPost,
 			"/api/v1/auth/logout",
@@ -395,12 +395,12 @@ func (s *AuthFlowIntegrationSuite) TestAuthFlow_EdgeCases() {
 	// Test with very long email
 	longEmail := "verylongemailaddressthatexceedsnormallimits@example.com"
 
-	registerReq := request.RegisterRequest{
+	registerReq := authmodels.RegisterRequest{
 		Email:    longEmail,
 		Password: "password123",
 	}
 
-	registerResp, registerCode, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	registerResp, registerCode, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodPost,
 		"/api/v1/auth/register",
@@ -414,12 +414,12 @@ func (s *AuthFlowIntegrationSuite) TestAuthFlow_EdgeCases() {
 	// Test with special characters in password
 	specialPassword := "P@ssw0rd!@#$%^&*()_+-=[]{}|;:,.<>?"
 
-	registerReq2 := request.RegisterRequest{
+	registerReq2 := authmodels.RegisterRequest{
 		Email:    "special@example.com",
 		Password: specialPassword,
 	}
 
-	registerResp2, registerCode2, err := httputil.RequestHTTP[response.GeneralResponse[any]](
+	registerResp2, registerCode2, err := httputil.RequestHTTP[commonmodels.GeneralResponse[any]](
 		s.e,
 		http.MethodPost,
 		"/api/v1/auth/register",
@@ -431,12 +431,12 @@ func (s *AuthFlowIntegrationSuite) TestAuthFlow_EdgeCases() {
 	s.r.Equal("success", registerResp2.Message)
 
 	// Test login with the special password
-	loginReq := request.AuthUserRequest{
+	loginReq := authmodels.AuthUserRequest{
 		Email:    "special@example.com",
 		Password: specialPassword,
 	}
 
-	loginResp, loginCode, err := httputil.RequestHTTP[response.GeneralResponse[response.AuthResponse]](
+	loginResp, loginCode, err := httputil.RequestHTTP[commonmodels.GeneralResponse[authmodels.AuthResponse]](
 		s.e,
 		http.MethodPost,
 		"/api/v1/auth/login",

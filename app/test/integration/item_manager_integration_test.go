@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	collectionconst "backend/service-platform/app/database/constant/collection"
-	"backend/service-platform/app/database/constant/currency"
-	"backend/service-platform/app/database/entity"
+	collectionconst "backend/service-platform/app/internal/collection/constants/collection"
+	"backend/service-platform/app/internal/collection/entities"
+	"backend/service-platform/app/internal/user/constants/currency"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 )

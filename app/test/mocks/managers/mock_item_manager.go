@@ -5,7 +5,7 @@
 package mocks
 
 import (
-	"backend/service-platform/app/database/entity"
+	"backend/service-platform/app/internal/collection/entities"
 	"context"
 
 	"github.com/google/uuid"

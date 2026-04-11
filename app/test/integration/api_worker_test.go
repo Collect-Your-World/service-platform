@@ -1,11 +1,11 @@
 package integration
 
 import (
-	"backend/service-platform/app/api/client/response"
-	"backend/service-platform/app/database/constant/job"
-	"backend/service-platform/app/database/entity"
-	"backend/service-platform/app/manager"
-	service "backend/service-platform/app/service"
+	commonmodels "backend/service-platform/app/internal/common/models"
+	job "backend/service-platform/app/internal/job/constants"
+	"backend/service-platform/app/internal/job/entities"
+	jobmanagers "backend/service-platform/app/internal/job/managers"
+	worker "backend/service-platform/app/internal/worker"
 	httputil "backend/service-platform/app/test/util"
 	"context"
 	"encoding/json"
@@ -21,7 +21,7 @@ import (
 
 type APIWorkerSuite struct {
 	RouterSuite
-	workerService *service.WorkerService
+	workerService *worker.WorkerService
 }
 
 func TestAPIWorkerSuite(t *testing.T) {
@@ -85,7 +85,7 @@ func (s *APIWorkerSuite) TestAPIWithWorkerIntegration() {
 	ctx, cancel := context.WithTimeout(s.ctx, 10*time.Second)
 	defer cancel()
 
-	jobReq := manager.CreateJobRequest{
+	jobReq := jobmanagers.CreateJobRequest{
 		Type:        "init_claim",
 		Priority:    job.PriorityHigh,
 		Payload:     map[string]interface{}{"user_id": "api-test-user", "amount": 500.0},
@@ -124,7 +124,7 @@ func (s *APIWorkerSuite) TestConcurrentAPIAndWorkerOperations() {
 	var createdJobIDs []string
 
 	for i, jobType := range jobTypes {
-		jobReq := manager.CreateJobRequest{
+		jobReq := jobmanagers.CreateJobRequest{
 			Type:        jobType,
 			Priority:    job.PriorityNormal,
 			Payload:     map[string]interface{}{"test_id": fmt.Sprintf("concurrent-test-%d", i)},
@@ -153,7 +153,7 @@ func (s *APIWorkerSuite) TestWorkerStatsWhileAPIRunning() {
 
 	// Create some jobs to give workers something to do
 	for i := 0; i < 3; i++ {
-		jobReq := manager.CreateJobRequest{
+		jobReq := jobmanagers.CreateJobRequest{
 			Type:        "init_claim",
 			Priority:    job.PriorityNormal,
 			Payload:     map[string]interface{}{"batch_id": fmt.Sprintf("stats-test-%d", i)},
@@ -177,7 +177,7 @@ func (s *APIWorkerSuite) TestWorkerStatsWhileAPIRunning() {
 	s.r.NotNil(stats.QueueDepths)
 
 	// Make an API request while checking stats
-	resp, code, err := httputil.RequestHTTP[response.GeneralResponse[response.HealthResponse]](s.e, http.MethodGet, "/health", nil, nil)
+	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[commonmodels.HealthResponse]](s.e, http.MethodGet, "/health", nil, nil)
 	s.r.NoError(err)
 	s.a.Equal(http.StatusOK, code)
 	s.a.Equal("up", resp.Data.Status)
@@ -213,7 +213,7 @@ func (s *APIWorkerSuite) TestJobCreationViaAPIEndpoint() {
 	s.r.NoError(err)
 
 	// Create a job using JobManager (as the API endpoint would do)
-	jobReq := manager.CreateJobRequest{
+	jobReq := jobmanagers.CreateJobRequest{
 		Type:        parsedRequest["type"].(string),
 		Priority:    job.PriorityHigh, // Would parse from string in real API
 		Payload:     parsedRequest["payload"].(map[string]interface{}),

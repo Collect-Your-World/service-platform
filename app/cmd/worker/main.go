@@ -2,13 +2,13 @@ package main
 
 import (
 	"backend/service-platform/app/internal/config"
-	"backend/service-platform/app/internal/runtime"
+	"backend/service-platform/app/internal/platform/runtime"
+	server "backend/service-platform/app/internal/worker"
 	"backend/service-platform/app/pkg/db"
 	"backend/service-platform/app/pkg/logging"
 	"backend/service-platform/app/pkg/redis"
 	ctxutil "backend/service-platform/app/pkg/util/context"
 	httpClientUtil "backend/service-platform/app/pkg/util/httpclient"
-	server "backend/service-platform/app/worker"
 	"context"
 	"time"
 

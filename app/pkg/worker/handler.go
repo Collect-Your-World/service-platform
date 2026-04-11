@@ -1,7 +1,7 @@
 package worker
 
 import (
-	"backend/service-platform/app/database/entity"
+	"backend/service-platform/app/internal/job/entities"
 	"context"
 
 	"go.uber.org/zap"

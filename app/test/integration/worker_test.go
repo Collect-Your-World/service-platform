@@ -1,8 +1,8 @@
 package integration
 
 import (
-	"backend/service-platform/app/database/constant/job"
-	"backend/service-platform/app/manager"
+	job "backend/service-platform/app/internal/job/constants"
+	jobmanagers "backend/service-platform/app/internal/job/managers"
 	"backend/service-platform/app/pkg/worker/handlers"
 	"context"
 	"testing"
@@ -44,7 +44,7 @@ func (s *WorkerSuite) TestJobStatuses() {
 
 func (s *WorkerSuite) TestCreateJobRequest() {
 	// Test CreateJobRequest structure
-	req := manager.CreateJobRequest{
+	req := jobmanagers.CreateJobRequest{
 		Type:        "test_job",
 		Priority:    job.PriorityHigh,
 		Payload:     map[string]interface{}{"test": "data"},
@@ -63,7 +63,7 @@ func (s *WorkerSuite) TestCreateAndRetrieveJob() {
 	defer cancel()
 
 	// Create a job
-	req := manager.CreateJobRequest{
+	req := jobmanagers.CreateJobRequest{
 		Type:        "init_claim",
 		Priority:    job.PriorityHigh,
 		Payload:     map[string]interface{}{"user_id": "123", "amount": 100.0},
@@ -94,7 +94,7 @@ func (s *WorkerSuite) TestClaimHandler() {
 	defer cancel()
 
 	// Create a claim job
-	req := manager.CreateJobRequest{
+	req := jobmanagers.CreateJobRequest{
 		Type:     "init_claim",
 		Priority: job.PriorityHigh,
 		Payload: map[string]interface{}{
@@ -122,7 +122,7 @@ func (s *WorkerSuite) TestKYCHandler() {
 	defer cancel()
 
 	// Create a KYC job
-	req := manager.CreateJobRequest{
+	req := jobmanagers.CreateJobRequest{
 		Type:     "kyc_verification",
 		Priority: job.PriorityHigh,
 		Payload: map[string]interface{}{
@@ -147,7 +147,7 @@ func (s *WorkerSuite) TestJobsByStatus() {
 	defer cancel()
 
 	// Create multiple jobs with different statuses
-	jobs := []manager.CreateJobRequest{
+	jobs := []jobmanagers.CreateJobRequest{
 		{
 			Type:        "init_claim",
 			Priority:    job.PriorityHigh,
