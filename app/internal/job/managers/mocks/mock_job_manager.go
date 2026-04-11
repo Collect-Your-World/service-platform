@@ -5,9 +5,9 @@
 package mocks
 
 import (
-	job "backend/service-platform/app/internal/job/constants"
+	"backend/service-platform/app/internal/job/constants"
 	"backend/service-platform/app/internal/job/entities"
-	jobmanagers "backend/service-platform/app/internal/job/managers"
+	"backend/service-platform/app/internal/job/managers"
 	"context"
 
 	"github.com/google/uuid"
@@ -42,7 +42,7 @@ func (_m *MockJobManager) EXPECT() *MockJobManager_Expecter {
 }
 
 // CreateJob provides a mock function for the type MockJobManager
-func (_mock *MockJobManager) CreateJob(ctx context.Context, req jobmanagers.CreateJobRequest) (*entity.Job, error) {
+func (_mock *MockJobManager) CreateJob(ctx context.Context, req managers.CreateJobRequest) (*entity.Job, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -51,17 +51,17 @@ func (_mock *MockJobManager) CreateJob(ctx context.Context, req jobmanagers.Crea
 
 	var r0 *entity.Job
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, jobmanagers.CreateJobRequest) (*entity.Job, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, managers.CreateJobRequest) (*entity.Job, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, jobmanagers.CreateJobRequest) *entity.Job); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, managers.CreateJobRequest) *entity.Job); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*entity.Job)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, jobmanagers.CreateJobRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, managers.CreateJobRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -76,20 +76,20 @@ type MockJobManager_CreateJob_Call struct {
 
 // CreateJob is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req jobmanagers.CreateJobRequest
+//   - req managers.CreateJobRequest
 func (_e *MockJobManager_Expecter) CreateJob(ctx interface{}, req interface{}) *MockJobManager_CreateJob_Call {
 	return &MockJobManager_CreateJob_Call{Call: _e.mock.On("CreateJob", ctx, req)}
 }
 
-func (_c *MockJobManager_CreateJob_Call) Run(run func(ctx context.Context, req jobmanagers.CreateJobRequest)) *MockJobManager_CreateJob_Call {
+func (_c *MockJobManager_CreateJob_Call) Run(run func(ctx context.Context, req managers.CreateJobRequest)) *MockJobManager_CreateJob_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 jobmanagers.CreateJobRequest
+		var arg1 managers.CreateJobRequest
 		if args[1] != nil {
-			arg1 = args[1].(jobmanagers.CreateJobRequest)
+			arg1 = args[1].(managers.CreateJobRequest)
 		}
 		run(
 			arg0,
@@ -104,7 +104,7 @@ func (_c *MockJobManager_CreateJob_Call) Return(job *entity.Job, err error) *Moc
 	return _c
 }
 
-func (_c *MockJobManager_CreateJob_Call) RunAndReturn(run func(ctx context.Context, req jobmanagers.CreateJobRequest) (*entity.Job, error)) *MockJobManager_CreateJob_Call {
+func (_c *MockJobManager_CreateJob_Call) RunAndReturn(run func(ctx context.Context, req managers.CreateJobRequest) (*entity.Job, error)) *MockJobManager_CreateJob_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -144,7 +144,7 @@ type MockJobManager_GetJob_Call struct {
 
 // GetJob is a helper method to define mock.On call
 //   - ctx context.Context
-//   - id string
+//   - id uuid.UUID
 func (_e *MockJobManager_Expecter) GetJob(ctx interface{}, id interface{}) *MockJobManager_GetJob_Call {
 	return &MockJobManager_GetJob_Call{Call: _e.mock.On("GetJob", ctx, id)}
 }

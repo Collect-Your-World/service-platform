@@ -5,7 +5,7 @@
 package mocks
 
 import (
-	collmanagers "backend/service-platform/app/internal/collection/managers"
+	"backend/service-platform/app/internal/collection/managers"
 	"context"
 
 	"github.com/google/uuid"
@@ -97,26 +97,26 @@ func (_c *MockCollectionManager_DeleteCollection_Call) RunAndReturn(run func(ctx
 }
 
 // ListCollections provides a mock function for the type MockCollectionManager
-func (_mock *MockCollectionManager) ListCollections(ctx context.Context, filter collmanagers.ListCollectionsFilter) ([]collmanagers.CollectionWithItems, error) {
+func (_mock *MockCollectionManager) ListCollections(ctx context.Context, filter managers.ListCollectionsFilter) ([]managers.CollectionWithItems, error) {
 	ret := _mock.Called(ctx, filter)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListCollections")
 	}
 
-	var r0 []collmanagers.CollectionWithItems
+	var r0 []managers.CollectionWithItems
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, collmanagers.ListCollectionsFilter) ([]collmanagers.CollectionWithItems, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, managers.ListCollectionsFilter) ([]managers.CollectionWithItems, error)); ok {
 		return returnFunc(ctx, filter)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, collmanagers.ListCollectionsFilter) []collmanagers.CollectionWithItems); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, managers.ListCollectionsFilter) []managers.CollectionWithItems); ok {
 		r0 = returnFunc(ctx, filter)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]collmanagers.CollectionWithItems)
+			r0 = ret.Get(0).([]managers.CollectionWithItems)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, collmanagers.ListCollectionsFilter) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, managers.ListCollectionsFilter) error); ok {
 		r1 = returnFunc(ctx, filter)
 	} else {
 		r1 = ret.Error(1)
@@ -131,20 +131,20 @@ type MockCollectionManager_ListCollections_Call struct {
 
 // ListCollections is a helper method to define mock.On call
 //   - ctx context.Context
-//   - filter collmanagers.ListCollectionsFilter
+//   - filter managers.ListCollectionsFilter
 func (_e *MockCollectionManager_Expecter) ListCollections(ctx interface{}, filter interface{}) *MockCollectionManager_ListCollections_Call {
 	return &MockCollectionManager_ListCollections_Call{Call: _e.mock.On("ListCollections", ctx, filter)}
 }
 
-func (_c *MockCollectionManager_ListCollections_Call) Run(run func(ctx context.Context, filter collmanagers.ListCollectionsFilter)) *MockCollectionManager_ListCollections_Call {
+func (_c *MockCollectionManager_ListCollections_Call) Run(run func(ctx context.Context, filter managers.ListCollectionsFilter)) *MockCollectionManager_ListCollections_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 collmanagers.ListCollectionsFilter
+		var arg1 managers.ListCollectionsFilter
 		if args[1] != nil {
-			arg1 = args[1].(collmanagers.ListCollectionsFilter)
+			arg1 = args[1].(managers.ListCollectionsFilter)
 		}
 		run(
 			arg0,
@@ -154,12 +154,12 @@ func (_c *MockCollectionManager_ListCollections_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockCollectionManager_ListCollections_Call) Return(collectionWithItemss []collmanagers.CollectionWithItems, err error) *MockCollectionManager_ListCollections_Call {
+func (_c *MockCollectionManager_ListCollections_Call) Return(collectionWithItemss []managers.CollectionWithItems, err error) *MockCollectionManager_ListCollections_Call {
 	_c.Call.Return(collectionWithItemss, err)
 	return _c
 }
 
-func (_c *MockCollectionManager_ListCollections_Call) RunAndReturn(run func(ctx context.Context, filter collmanagers.ListCollectionsFilter) ([]collmanagers.CollectionWithItems, error)) *MockCollectionManager_ListCollections_Call {
+func (_c *MockCollectionManager_ListCollections_Call) RunAndReturn(run func(ctx context.Context, filter managers.ListCollectionsFilter) ([]managers.CollectionWithItems, error)) *MockCollectionManager_ListCollections_Call {
 	_c.Call.Return(run)
 	return _c
 }

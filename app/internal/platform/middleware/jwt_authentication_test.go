@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"backend/service-platform/app/internal/config"
-	"backend/service-platform/app/internal/platform/middleware"
 	"backend/service-platform/app/internal/platform/runtime"
 	jwtPkg "backend/service-platform/app/pkg/jwt"
 
@@ -22,7 +21,7 @@ import (
 
 type JwtAuthenticationSuite struct {
 	suite.Suite
-	jwtAuth     middleware.JwtAuthentication
+	jwtAuth     JwtAuthentication
 	echo        *echo.Echo
 	req         *http.Request
 	rec         *httptest.ResponseRecorder
@@ -61,7 +60,7 @@ func (s *JwtAuthenticationSuite) SetupTest() {
 	s.rec = httptest.NewRecorder()
 	s.ctx = s.echo.NewContext(s.req, s.rec)
 
-	s.jwtAuth = middleware.NewJwtAuthentication(s.res)
+	s.jwtAuth = NewJwtAuthentication(s.res)
 }
 
 // Helper function to create a valid JWT token

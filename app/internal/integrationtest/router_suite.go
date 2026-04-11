@@ -1,4 +1,4 @@
-package integration
+package integrationtest
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"backend/service-platform/app/internal/platform/runtime"
 	"backend/service-platform/app/internal/platform/validator"
 	"backend/service-platform/app/internal/repository"
+	"backend/service-platform/app/internal/testutil"
 	worker "backend/service-platform/app/internal/worker"
 
 	"github.com/labstack/echo/v4"
@@ -25,28 +26,27 @@ import (
 	"backend/service-platform/app/pkg/logging"
 	"backend/service-platform/app/pkg/redis"
 	ctxutil "backend/service-platform/app/pkg/util/context"
-	httputil "backend/service-platform/app/test/util"
 )
 
 type RouterSuite struct {
 	suite.Suite
-	resource     runtime.Resource
-	r            *require.Assertions
-	a            *assert.Assertions
-	e            *echo.Echo
-	ctx          context.Context
-	repositories *repository.Repositories
-	services     *worker.Services
-	managers     *appmanagers.Managers
-	suiteSetupAt time.Time
-	testSetupAt  time.Time
+	Resource     runtime.Resource
+	R            *require.Assertions
+	A            *assert.Assertions
+	Echo         *echo.Echo
+	Ctx          context.Context
+	Repositories *repository.Repositories
+	Services     *worker.Services
+	Managers     *appmanagers.Managers
+	SuiteSetupAt time.Time
+	TestSetupAt  time.Time
 }
 
 func (s *RouterSuite) SetupSuite() {
-	s.r = s.Suite.Require()
-	s.a = s.Suite.Assert()
+	s.R = s.Suite.Require()
+	s.A = s.Suite.Assert()
 	env := ctxutil.AppMode("test")
-	s.ctx = ctxutil.SetAppMode(context.Background(), env)
+	s.Ctx = ctxutil.SetAppMode(context.Background(), env)
 
 	logConfig := logging.NewLogConfig("[service-platform]", env)
 	logger, err := logConfig.NewLogging()
@@ -81,10 +81,10 @@ func (s *RouterSuite) SetupSuite() {
 		Logger:  logger,
 		Clients: runtime.Clients{},
 	}
-	s.resource = res
+	s.Resource = res
 
 	repositories := repository.NewRepositories(res)
-	s.repositories = repositories
+	s.Repositories = repositories
 
 	workerConfig := res.Config.WorkerConfig
 
@@ -100,60 +100,60 @@ func (s *RouterSuite) SetupSuite() {
 		}()
 		services = worker.NewServicesWithJobManager(res, workerConfig, tempManagers.JobManager)
 	}()
-	s.services = services
+	s.Services = services
 
 	managers := appmanagers.NewManagers(res, nil, repositories)
-	s.managers = managers
+	s.Managers = managers
 
 	controllers := platctrl.NewControllers(managers, res)
 	validators := validator.NewValidators(res)
 
 	middlewares := echomw.NewMiddleware(res)
-	s.e = router.NewRouter(res, validators, middlewares, controllers, repositories).Echo
-	s.suiteSetupAt = s.startSuiteTimestamp()
+	s.Echo = router.NewRouter(res, validators, middlewares, controllers, repositories).Echo
+	s.SuiteSetupAt = s.startSuiteTimestamp()
 }
 
 func (s *RouterSuite) TearDownSuite() {
-	s.resource.Logger.Info("Starting integration test cleanup")
+	s.Resource.Logger.Info("Starting integration test cleanup")
 
 	if err := s.cleanAllTestData(); err != nil {
-		s.resource.Logger.Error("Failed to clean database in test teardown", zap.Error(err))
+		s.Resource.Logger.Error("Failed to clean database in test teardown", zap.Error(err))
 	}
 
-	if s.resource.Redis != nil {
+	if s.Resource.Redis != nil {
 		s.cleanRedis()
-		if err := s.resource.Redis.Close(); err != nil {
-			s.resource.Logger.Error("Failed to close Redis connection in test teardown", zap.Error(err))
+		if err := s.Resource.Redis.Close(); err != nil {
+			s.Resource.Logger.Error("Failed to close Redis connection in test teardown", zap.Error(err))
 		}
 	}
 
-	if s.resource.DB != nil {
-		if err := s.resource.DB.Close(); err != nil {
-			s.resource.Logger.Error("Failed to close database connection in test teardown", zap.Error(err))
+	if s.Resource.DB != nil {
+		if err := s.Resource.DB.Close(); err != nil {
+			s.Resource.Logger.Error("Failed to close database connection in test teardown", zap.Error(err))
 		}
 	}
 
-	s.resource.Logger.Info("Integration test cleanup completed")
+	s.Resource.Logger.Info("Integration test cleanup completed")
 }
 
 func (s *RouterSuite) SetupTest() {
-	s.testSetupAt = s.startSuiteTimestamp()
-	if err := s.cleanDBAt(s.testSetupAt); err != nil {
+	s.TestSetupAt = s.startSuiteTimestamp()
+	if err := s.cleanDBAt(s.TestSetupAt); err != nil {
 		s.T().Fatal(err)
 	}
-	httputil.ClearCookies()
+	testutil.ClearCookies()
 }
 
 func (s *RouterSuite) TearDownTest() {
-	if err := s.cleanDBAt(s.testSetupAt); err != nil {
+	if err := s.cleanDBAt(s.TestSetupAt); err != nil {
 		s.T().Fatal(err)
 	}
 }
 
 func (s *RouterSuite) startSuiteTimestamp() time.Time {
 	var timestamp time.Time
-	err := s.resource.DB.PrimaryDb.QueryRow("SELECT NOW()").Scan(&timestamp)
-	s.r.NoError(err)
+	err := s.Resource.DB.PrimaryDb.QueryRow("SELECT NOW()").Scan(&timestamp)
+	s.R.NoError(err)
 	now := time.Now()
 	if timestamp.After(time.Now()) {
 		timestamp = now
@@ -162,8 +162,8 @@ func (s *RouterSuite) startSuiteTimestamp() time.Time {
 }
 
 func (s *RouterSuite) cleanDBAt(timestamp time.Time) error {
-	s.resource.Logger.Debug("clean test db")
-	rows, err := s.resource.DB.PrimaryDb.QueryContext(s.ctx, `
+	s.Resource.Logger.Debug("clean test db")
+	rows, err := s.Resource.DB.PrimaryDb.QueryContext(s.Ctx, `
 	SELECT t.table_name
 	FROM information_schema.tables t
 	JOIN information_schema.columns c
@@ -178,7 +178,7 @@ func (s *RouterSuite) cleanDBAt(timestamp time.Time) error {
 	defer func(rows *sql.Rows) {
 		err := rows.Close()
 		if err != nil {
-			s.resource.Logger.Error(err.Error())
+			s.Resource.Logger.Error(err.Error())
 		}
 	}(rows)
 	for rows.Next() {
@@ -186,11 +186,11 @@ func (s *RouterSuite) cleanDBAt(timestamp time.Time) error {
 		if err := rows.Scan(&table); err != nil {
 			return err
 		}
-		_, err = s.resource.DB.PrimaryConn().NewDelete().Table(table).Where("created_at > ?", timestamp).Exec(s.ctx)
+		_, err = s.Resource.DB.PrimaryConn().NewDelete().Table(table).Where("created_at > ?", timestamp).Exec(s.Ctx)
 		if err != nil {
-			s.resource.Logger.Error("failed to clean db", zap.String("table", table), zap.Error(err))
+			s.Resource.Logger.Error("failed to clean db", zap.String("table", table), zap.Error(err))
 		} else {
-			s.resource.Logger.Debug("cleaned db", zap.String("table", table), zap.Time("created_at > ", timestamp))
+			s.Resource.Logger.Debug("cleaned db", zap.String("table", table), zap.Time("created_at > ", timestamp))
 		}
 	}
 	if err := rows.Err(); err != nil {
@@ -200,9 +200,9 @@ func (s *RouterSuite) cleanDBAt(timestamp time.Time) error {
 }
 
 func (s *RouterSuite) cleanAllTestData() error {
-	s.resource.Logger.Info("Cleaning all test data from database")
+	s.Resource.Logger.Info("Cleaning all test data from database")
 
-	rows, err := s.resource.DB.PrimaryDb.QueryContext(s.ctx, `
+	rows, err := s.Resource.DB.PrimaryDb.QueryContext(s.Ctx, `
 	SELECT t.table_name
 	FROM information_schema.tables t
 	JOIN information_schema.columns c
@@ -226,11 +226,11 @@ func (s *RouterSuite) cleanAllTestData() error {
 	}
 
 	for _, table := range tables {
-		_, err := s.resource.DB.PrimaryConn().NewDelete().Table(table).Where("created_at >= ?", s.suiteSetupAt).Exec(s.ctx)
+		_, err := s.Resource.DB.PrimaryConn().NewDelete().Table(table).Where("created_at >= ?", s.SuiteSetupAt).Exec(s.Ctx)
 		if err != nil {
-			s.resource.Logger.Error("Failed to clean table", zap.String("table", table), zap.Error(err))
+			s.Resource.Logger.Error("Failed to clean table", zap.String("table", table), zap.Error(err))
 		} else {
-			s.resource.Logger.Debug("Cleaned table", zap.String("table", table))
+			s.Resource.Logger.Debug("Cleaned table", zap.String("table", table))
 		}
 	}
 
@@ -238,13 +238,13 @@ func (s *RouterSuite) cleanAllTestData() error {
 }
 
 func (s *RouterSuite) cleanRedis() {
-	s.resource.Logger.Info("Flushing all Redis data")
+	s.Resource.Logger.Info("Flushing all Redis data")
 
 	ctx := context.Background()
 
-	if err := s.resource.Redis.Reset(ctx); err != nil {
-		s.resource.Logger.Error("Failed to flush Redis", zap.Error(err))
+	if err := s.Resource.Redis.Reset(ctx); err != nil {
+		s.Resource.Logger.Error("Failed to flush Redis", zap.Error(err))
 	} else {
-		s.resource.Logger.Info("Successfully flushed all Redis data")
+		s.Resource.Logger.Info("Successfully flushed all Redis data")
 	}
 }

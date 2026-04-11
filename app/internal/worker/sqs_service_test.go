@@ -1,4 +1,4 @@
-package service_test
+package worker_test
 
 import (
 	"backend/service-platform/app/internal/config"

@@ -1,12 +1,13 @@
-package integration
+package worker_test
 
 import (
 	commonmodels "backend/service-platform/app/internal/common/models"
+	integrationtest "backend/service-platform/app/internal/integrationtest"
 	job "backend/service-platform/app/internal/job/constants"
 	"backend/service-platform/app/internal/job/entities"
 	jobmanagers "backend/service-platform/app/internal/job/managers"
+	testutil "backend/service-platform/app/internal/testutil"
 	worker "backend/service-platform/app/internal/worker"
-	httputil "backend/service-platform/app/test/util"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -20,7 +21,7 @@ import (
 )
 
 type APIWorkerSuite struct {
-	RouterSuite
+	integrationtest.RouterSuite
 	workerService *worker.WorkerService
 }
 
@@ -32,7 +33,7 @@ func (s *APIWorkerSuite) SetupTest() {
 	s.RouterSuite.SetupTest()
 
 	// Get WorkerService from services registry (already created in RouterSuite)
-	s.workerService = s.services.WorkerService
+	s.workerService = s.Services.WorkerService
 
 	// Start worker service in background with long-running context
 	go func() {
@@ -42,7 +43,7 @@ func (s *APIWorkerSuite) SetupTest() {
 		defer cancel()
 
 		if err := s.workerService.Start(ctx); err != nil {
-			s.resource.Logger.Error("Worker service failed during test",
+			s.Resource.Logger.Error("Worker service failed during test",
 				zap.Error(err))
 		}
 	}()
@@ -82,7 +83,7 @@ func (s *APIWorkerSuite) waitForWorkersReady() {
 func (s *APIWorkerSuite) TestAPIWithWorkerIntegration() {
 	// Create a job via API (if the job creation endpoint exists)
 	// or directly via JobManager and verify it gets processed
-	ctx, cancel := context.WithTimeout(s.ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(s.Ctx, 10*time.Second)
 	defer cancel()
 
 	jobReq := jobmanagers.CreateJobRequest{
@@ -92,15 +93,15 @@ func (s *APIWorkerSuite) TestAPIWithWorkerIntegration() {
 		MaxAttempts: 3,
 	}
 
-	createdJob, err := s.managers.JobManager.CreateJob(ctx, jobReq)
-	s.r.NoError(err)
-	s.r.NotNil(createdJob)
-	s.a.Equal(job.Pending, createdJob.Status)
+	createdJob, err := s.Managers.JobManager.CreateJob(ctx, jobReq)
+	s.R.NoError(err)
+	s.R.NotNil(createdJob)
+	s.A.Equal(job.Pending, createdJob.Status)
 
 	// 3. Wait for job to be processed by worker
 	var processedJob *entity.Job
-	s.a.Eventually(func() bool {
-		jobEntity, err := s.managers.JobManager.GetJob(ctx, createdJob.ID)
+	s.A.Eventually(func() bool {
+		jobEntity, err := s.Managers.JobManager.GetJob(ctx, createdJob.ID)
 		if err != nil {
 			return false
 		}
@@ -108,15 +109,15 @@ func (s *APIWorkerSuite) TestAPIWithWorkerIntegration() {
 		return jobEntity.Status != job.Pending // Job should be picked up
 	}, 5*time.Second, 100*time.Millisecond, "Job should be processed by worker")
 
-	s.r.NotNil(processedJob)
+	s.R.NotNil(processedJob)
 
 	// Job should either be processing, completed, or still pending (depending on timing)
-	s.a.Contains([]job.Status{job.Pending, job.Processing, job.Completed}, processedJob.Status)
+	s.A.Contains([]job.Status{job.Pending, job.Processing, job.Completed}, processedJob.Status)
 }
 
 func (s *APIWorkerSuite) TestConcurrentAPIAndWorkerOperations() {
 	// Test concurrent API requests while workers are processing jobs
-	ctx, cancel := context.WithTimeout(s.ctx, 15*time.Second)
+	ctx, cancel := context.WithTimeout(s.Ctx, 15*time.Second)
 	defer cancel()
 
 	// Create multiple jobs concurrently
@@ -131,24 +132,24 @@ func (s *APIWorkerSuite) TestConcurrentAPIAndWorkerOperations() {
 			MaxAttempts: 3,
 		}
 
-		createdJob, err := s.managers.JobManager.CreateJob(ctx, jobReq)
-		s.r.NoError(err)
+		createdJob, err := s.Managers.JobManager.CreateJob(ctx, jobReq)
+		s.R.NoError(err)
 		createdJobIDs = append(createdJobIDs, createdJob.ID.String())
 	}
 
 	// Verify all jobs still exist and can be retrieved
 	for _, jobID := range createdJobIDs {
-		retrievedJob, err := s.managers.JobManager.GetJob(ctx, uuid.MustParse(jobID))
-		s.r.NoError(err)
-		s.r.NotNil(retrievedJob)
-		s.a.Equal(jobID, retrievedJob.ID.String())
+		retrievedJob, err := s.Managers.JobManager.GetJob(ctx, uuid.MustParse(jobID))
+		s.R.NoError(err)
+		s.R.NotNil(retrievedJob)
+		s.A.Equal(jobID, retrievedJob.ID.String())
 	}
 }
 
 func (s *APIWorkerSuite) TestWorkerStatsWhileAPIRunning() {
 	// Test that we can get worker statistics while API is running
 
-	ctx, cancel := context.WithTimeout(s.ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(s.Ctx, 10*time.Second)
 	defer cancel()
 
 	// Create some jobs to give workers something to do
@@ -160,8 +161,8 @@ func (s *APIWorkerSuite) TestWorkerStatsWhileAPIRunning() {
 			MaxAttempts: 3,
 		}
 
-		_, err := s.managers.JobManager.CreateJob(ctx, jobReq)
-		s.r.NoError(err)
+		_, err := s.Managers.JobManager.CreateJob(ctx, jobReq)
+		s.R.NoError(err)
 	}
 
 	// Allow a brief moment for workers to process jobs (if any are queued)
@@ -170,21 +171,21 @@ func (s *APIWorkerSuite) TestWorkerStatsWhileAPIRunning() {
 	stats := s.workerService.GetStats()
 
 	// Verify statistics make sense
-	s.a.GreaterOrEqual(stats.ActiveWorkers, 0)
-	s.a.GreaterOrEqual(stats.ProcessingJobs, 0)
-	s.a.GreaterOrEqual(stats.TotalProcessed, int64(0))
-	s.a.GreaterOrEqual(stats.TotalFailed, int64(0))
-	s.r.NotNil(stats.QueueDepths)
+	s.A.GreaterOrEqual(stats.ActiveWorkers, 0)
+	s.A.GreaterOrEqual(stats.ProcessingJobs, 0)
+	s.A.GreaterOrEqual(stats.TotalProcessed, int64(0))
+	s.A.GreaterOrEqual(stats.TotalFailed, int64(0))
+	s.R.NotNil(stats.QueueDepths)
 
 	// Make an API request while checking stats
-	resp, code, err := httputil.RequestHTTP[commonmodels.GeneralResponse[commonmodels.HealthResponse]](s.e, http.MethodGet, "/health", nil, nil)
-	s.r.NoError(err)
-	s.a.Equal(http.StatusOK, code)
-	s.a.Equal("up", resp.Data.Status)
+	resp, code, err := testutil.RequestHTTP[commonmodels.GeneralResponse[commonmodels.HealthResponse]](s.Echo, http.MethodGet, "/health", nil, nil)
+	s.R.NoError(err)
+	s.A.Equal(http.StatusOK, code)
+	s.A.Equal("up", resp.Data.Status)
 
 	// Get stats again to ensure they're still accessible
 	stats2 := s.workerService.GetStats()
-	s.r.NotNil(stats2)
+	s.R.NotNil(stats2)
 }
 
 func (s *APIWorkerSuite) TestJobCreationViaAPIEndpoint() {
@@ -192,7 +193,7 @@ func (s *APIWorkerSuite) TestJobCreationViaAPIEndpoint() {
 	// This test assumes we might add a job creation endpoint in the future
 
 	// For now, we'll test the pattern of how it would work
-	ctx, cancel := context.WithTimeout(s.ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(s.Ctx, 10*time.Second)
 	defer cancel()
 
 	// Simulate what an API endpoint for job creation might look like
@@ -205,12 +206,12 @@ func (s *APIWorkerSuite) TestJobCreationViaAPIEndpoint() {
 
 	// Convert to JSON as it would come from API
 	jsonData, err := json.Marshal(jobRequest)
-	s.r.NoError(err)
+	s.R.NoError(err)
 
 	// Parse it back (simulating API endpoint processing)
 	var parsedRequest map[string]interface{}
 	err = json.Unmarshal(jsonData, &parsedRequest)
-	s.r.NoError(err)
+	s.R.NoError(err)
 
 	// Create a job using JobManager (as the API endpoint would do)
 	jobReq := jobmanagers.CreateJobRequest{
@@ -220,14 +221,14 @@ func (s *APIWorkerSuite) TestJobCreationViaAPIEndpoint() {
 		MaxAttempts: int(parsedRequest["max_attempts"].(float64)),
 	}
 
-	createdJob, err := s.managers.JobManager.CreateJob(ctx, jobReq)
-	s.r.NoError(err)
-	s.r.NotNil(createdJob)
-	s.a.Equal("init_claim", createdJob.Type)
-	s.a.Equal(job.PriorityHigh, createdJob.Priority)
+	createdJob, err := s.Managers.JobManager.CreateJob(ctx, jobReq)
+	s.R.NoError(err)
+	s.R.NotNil(createdJob)
+	s.A.Equal("init_claim", createdJob.Type)
+	s.A.Equal(job.PriorityHigh, createdJob.Priority)
 
 	// Verify the job was created and can be retrieved
-	retrievedJob, err := s.managers.JobManager.GetJob(ctx, createdJob.ID)
-	s.r.NoError(err)
-	s.a.Equal(createdJob.ID, retrievedJob.ID)
+	retrievedJob, err := s.Managers.JobManager.GetJob(ctx, createdJob.ID)
+	s.R.NoError(err)
+	s.A.Equal(createdJob.ID, retrievedJob.ID)
 }

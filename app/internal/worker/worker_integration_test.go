@@ -1,6 +1,7 @@
-package integration
+package worker_test
 
 import (
+	integrationtest "backend/service-platform/app/internal/integrationtest"
 	job "backend/service-platform/app/internal/job/constants"
 	jobmanagers "backend/service-platform/app/internal/job/managers"
 	"backend/service-platform/app/pkg/worker/handlers"
@@ -12,7 +13,7 @@ import (
 )
 
 type WorkerSuite struct {
-	RouterSuite
+	integrationtest.RouterSuite
 }
 
 func TestWorkerSuite(t *testing.T) {
@@ -21,25 +22,25 @@ func TestWorkerSuite(t *testing.T) {
 
 func (s *WorkerSuite) TestJobManagerAvailability() {
 	// Test that JobManager is available in the test suite
-	s.r.NotNil(s.managers)
-	s.r.NotNil(s.managers.JobManager)
+	s.R.NotNil(s.Managers)
+	s.R.NotNil(s.Managers.JobManager)
 }
 
 func (s *WorkerSuite) TestJobPriorities() {
 	// Test that job priority constants are working correctly
-	s.a.Equal("critical", job.PriorityCritical.String())
-	s.a.Equal("high", job.PriorityHigh.String())
-	s.a.Equal("normal", job.PriorityNormal.String())
-	s.a.Equal("low", job.PriorityLow.String())
+	s.A.Equal("critical", job.PriorityCritical.String())
+	s.A.Equal("high", job.PriorityHigh.String())
+	s.A.Equal("normal", job.PriorityNormal.String())
+	s.A.Equal("low", job.PriorityLow.String())
 }
 
 func (s *WorkerSuite) TestJobStatuses() {
 	// Test that job status constants are working correctly
-	s.a.Equal("pending", string(job.Pending))
-	s.a.Equal("processing", string(job.Processing))
-	s.a.Equal("completed", string(job.Completed))
-	s.a.Equal("failed", string(job.Failed))
-	s.a.Equal("retrying", string(job.Retrying))
+	s.A.Equal("pending", string(job.Pending))
+	s.A.Equal("processing", string(job.Processing))
+	s.A.Equal("completed", string(job.Completed))
+	s.A.Equal("failed", string(job.Failed))
+	s.A.Equal("retrying", string(job.Retrying))
 }
 
 func (s *WorkerSuite) TestCreateJobRequest() {
@@ -51,15 +52,15 @@ func (s *WorkerSuite) TestCreateJobRequest() {
 		MaxAttempts: 3,
 	}
 
-	s.a.Equal("test_job", req.Type)
-	s.a.Equal(job.PriorityHigh, req.Priority)
-	s.a.Equal("data", req.Payload["test"])
-	s.a.Equal(3, req.MaxAttempts)
+	s.A.Equal("test_job", req.Type)
+	s.A.Equal(job.PriorityHigh, req.Priority)
+	s.A.Equal("data", req.Payload["test"])
+	s.A.Equal(3, req.MaxAttempts)
 }
 
 func (s *WorkerSuite) TestCreateAndRetrieveJob() {
 	// Test creating and retrieving a job through JobManager
-	ctx, cancel := context.WithTimeout(s.ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(s.Ctx, 10*time.Second)
 	defer cancel()
 
 	// Create a job
@@ -70,27 +71,27 @@ func (s *WorkerSuite) TestCreateAndRetrieveJob() {
 		MaxAttempts: 3,
 	}
 
-	createdJob, err := s.managers.JobManager.CreateJob(ctx, req)
-	s.r.NoError(err)
-	s.r.NotNil(createdJob)
-	s.a.Equal("init_claim", createdJob.Type)
-	s.a.Equal(job.PriorityHigh, createdJob.Priority)
-	s.a.Equal(job.Pending, createdJob.Status)
+	createdJob, err := s.Managers.JobManager.CreateJob(ctx, req)
+	s.R.NoError(err)
+	s.R.NotNil(createdJob)
+	s.A.Equal("init_claim", createdJob.Type)
+	s.A.Equal(job.PriorityHigh, createdJob.Priority)
+	s.A.Equal(job.Pending, createdJob.Status)
 
 	// Retrieve the job by ID
-	retrievedJob, err := s.managers.JobManager.GetJob(ctx, createdJob.ID)
-	s.r.NoError(err)
-	s.r.NotNil(retrievedJob)
-	s.a.Equal(createdJob.ID, retrievedJob.ID)
-	s.a.Equal(createdJob.Type, retrievedJob.Type)
+	retrievedJob, err := s.Managers.JobManager.GetJob(ctx, createdJob.ID)
+	s.R.NoError(err)
+	s.R.NotNil(retrievedJob)
+	s.A.Equal(createdJob.ID, retrievedJob.ID)
+	s.A.Equal(createdJob.Type, retrievedJob.Type)
 }
 
 func (s *WorkerSuite) TestClaimHandler() {
 	// Test claim handler directly
-	claimHandler := handlers.NewInitClaimHandler(s.resource.Logger)
-	s.r.NotNil(claimHandler)
+	claimHandler := handlers.NewInitClaimHandler(s.Resource.Logger)
+	s.R.NotNil(claimHandler)
 
-	ctx, cancel := context.WithTimeout(s.ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(s.Ctx, 5*time.Second)
 	defer cancel()
 
 	// Create a claim job
@@ -105,20 +106,20 @@ func (s *WorkerSuite) TestClaimHandler() {
 		MaxAttempts: 3,
 	}
 
-	createdJob, err := s.managers.JobManager.CreateJob(ctx, req)
-	s.r.NoError(err)
+	createdJob, err := s.Managers.JobManager.CreateJob(ctx, req)
+	s.R.NoError(err)
 
 	// Test handler execution
 	err = claimHandler.Handle(ctx, createdJob)
-	s.r.NoError(err, "Claim handler should process job successfully")
+	s.R.NoError(err, "Claim handler should process job successfully")
 }
 
 func (s *WorkerSuite) TestKYCHandler() {
 	// Test KYC handler directly
-	kycHandler := handlers.NewKYCVerificationHandler(s.resource.Logger)
-	s.r.NotNil(kycHandler)
+	kycHandler := handlers.NewKYCVerificationHandler(s.Resource.Logger)
+	s.R.NotNil(kycHandler)
 
-	ctx, cancel := context.WithTimeout(s.ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(s.Ctx, 5*time.Second)
 	defer cancel()
 
 	// Create a KYC job
@@ -133,17 +134,17 @@ func (s *WorkerSuite) TestKYCHandler() {
 		MaxAttempts: 3,
 	}
 
-	createdJob, err := s.managers.JobManager.CreateJob(ctx, req)
-	s.r.NoError(err)
+	createdJob, err := s.Managers.JobManager.CreateJob(ctx, req)
+	s.R.NoError(err)
 
 	// Test handler execution
 	err = kycHandler.Handle(ctx, createdJob)
-	s.r.NoError(err, "KYC handler should process job successfully")
+	s.R.NoError(err, "KYC handler should process job successfully")
 }
 
 func (s *WorkerSuite) TestJobsByStatus() {
 	// Test retrieving jobs by status
-	ctx, cancel := context.WithTimeout(s.ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(s.Ctx, 10*time.Second)
 	defer cancel()
 
 	// Create multiple jobs with different statuses
@@ -164,15 +165,15 @@ func (s *WorkerSuite) TestJobsByStatus() {
 
 	var createdJobs []string
 	for _, jobReq := range jobs {
-		createdJob, err := s.managers.JobManager.CreateJob(ctx, jobReq)
-		s.r.NoError(err)
+		createdJob, err := s.Managers.JobManager.CreateJob(ctx, jobReq)
+		s.R.NoError(err)
 		createdJobs = append(createdJobs, createdJob.ID.String())
 	}
 
 	// Retrieve pending jobs
-	pendingJobs, err := s.managers.JobManager.GetJobsByStatus(ctx, job.Pending, 10)
-	s.r.NoError(err)
-	s.r.GreaterOrEqual(len(pendingJobs), 2, "Should have at least the jobs we created")
+	pendingJobs, err := s.Managers.JobManager.GetJobsByStatus(ctx, job.Pending, 10)
+	s.R.NoError(err)
+	s.R.GreaterOrEqual(len(pendingJobs), 2, "Should have at least the jobs we created")
 
 	// Verify our created jobs are in the pending list
 	foundJobs := 0
@@ -180,9 +181,9 @@ func (s *WorkerSuite) TestJobsByStatus() {
 		for _, createdJobID := range createdJobs {
 			if pendingJob.ID.String() == createdJobID {
 				foundJobs++
-				s.a.Equal(job.Pending, pendingJob.Status)
+				s.A.Equal(job.Pending, pendingJob.Status)
 			}
 		}
 	}
-	s.a.Equal(2, foundJobs, "Should find both created jobs in pending status")
+	s.A.Equal(2, foundJobs, "Should find both created jobs in pending status")
 }

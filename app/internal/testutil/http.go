@@ -1,4 +1,4 @@
-package util_test
+package testutil
 
 import (
 	"bytes"
@@ -46,7 +46,6 @@ func Request(e *echo.Echo, method string, target string, token *string, bodyByte
 	return recorder.Body.Bytes(), recorder.Code
 }
 
-// camelToSnake converts a camelCase string to snake_case
 func camelToSnake(camel string) string {
 	var snake strings.Builder
 	for i, r := range camel {
@@ -58,18 +57,15 @@ func camelToSnake(camel string) string {
 	return strings.ToLower(snake.String())
 }
 
-// transformMapKeys recursively transforms all camelCase keys in a map to snake_case
 func transformMapKeys(m map[string]interface{}) map[string]interface{} {
 	result := make(map[string]interface{})
 
 	for k, v := range m {
 		snakeKey := camelToSnake(k)
 
-		// Recursively transform nested maps
 		if nestedMap, ok := v.(map[string]interface{}); ok {
 			result[snakeKey] = transformMapKeys(nestedMap)
 		} else if nestedSlice, ok := v.([]interface{}); ok {
-			// Handle arrays/slices that might contain maps
 			transformedSlice := make([]interface{}, len(nestedSlice))
 			for i, item := range nestedSlice {
 				if itemMap, ok := item.(map[string]interface{}); ok {

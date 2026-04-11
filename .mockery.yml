@@ -11,13 +11,23 @@ require-template-schema-exists: true
 template: testify
 template-schema: '{{.Template}}.schema.json'
 packages:
-  backend/service-platform/app/manager:
+  backend/service-platform/app/internal/auth/managers:
     config:
       all: true
       include-auto-generated: true
-      dir: 'app/test/mocks/managers'
-  backend/service-platform/app/pkg/clients:
+      dir: 'app/internal/auth/managers/mocks'
+  backend/service-platform/app/internal/user/managers:
     config:
       all: true
       include-auto-generated: true
-      dir: 'app/test/mocks/clients'
+      dir: 'app/internal/user/managers/mocks'
+  backend/service-platform/app/internal/collection/managers:
+    config:
+      all: true
+      include-auto-generated: true
+      dir: 'app/internal/collection/managers/mocks'
+  backend/service-platform/app/internal/job/managers:
+    config:
+      all: true
+      include-auto-generated: true
+      dir: 'app/internal/job/managers/mocks'

@@ -1,10 +1,11 @@
-package integration
+package managers_test
 
 import (
 	collectionconst "backend/service-platform/app/internal/collection/constants/collection"
-	"backend/service-platform/app/internal/collection/entities"
+	entity "backend/service-platform/app/internal/collection/entities"
 	collmanagers "backend/service-platform/app/internal/collection/managers"
 	collrepo "backend/service-platform/app/internal/collection/repositories"
+	integrationtest "backend/service-platform/app/internal/integrationtest"
 	"backend/service-platform/app/internal/user/constants/currency"
 	"context"
 	"testing"
@@ -15,7 +16,7 @@ import (
 )
 
 type CollectionManagerSuite struct {
-	RouterSuite
+	integrationtest.RouterSuite
 }
 
 func TestCollectionManagerSuite(t *testing.T) {
@@ -23,7 +24,7 @@ func TestCollectionManagerSuite(t *testing.T) {
 }
 
 func (s *CollectionManagerSuite) Test_ListCollections_WithFilters() {
-	ctx, cancel := context.WithTimeout(s.ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(s.Ctx, 10*time.Second)
 	defer cancel()
 
 	colA := s.seedCollection(ctx, entity.Collection{
@@ -47,27 +48,27 @@ func (s *CollectionManagerSuite) Test_ListCollections_WithFilters() {
 		{ItemID: uuid.New()},
 	})
 
-	result, err := s.managers.CollectionManager.ListCollections(ctx, collmanagers.ListCollectionsFilter{
+	result, err := s.Managers.CollectionManager.ListCollections(ctx, collmanagers.ListCollectionsFilter{
 		Types:            []collectionconst.Type{collectionconst.Theme},
 		RewardCurrencies: []currency.Currency{currency.COIN},
 		IsEnabled:        boolPtr(true),
 	})
-	s.r.NoError(err)
-	s.a.Len(result, 1)
-	s.a.Equal(colA.ID, result[0].Collection.ID)
-	s.a.Len(result[0].Items, 2)
+	s.R.NoError(err)
+	s.A.Len(result, 1)
+	s.A.Equal(colA.ID, result[0].Collection.ID)
+	s.A.Len(result[0].Items, 2)
 
-	byName, err := s.managers.CollectionManager.ListCollections(ctx, collmanagers.ListCollectionsFilter{
+	byName, err := s.Managers.CollectionManager.ListCollections(ctx, collmanagers.ListCollectionsFilter{
 		Names: []string{colB.Name},
 	})
-	s.r.NoError(err)
-	s.a.Len(byName, 1)
-	s.a.Equal(colB.ID, byName[0].Collection.ID)
-	s.a.Len(byName[0].Items, 1)
+	s.R.NoError(err)
+	s.A.Len(byName, 1)
+	s.A.Equal(colB.ID, byName[0].Collection.ID)
+	s.A.Len(byName[0].Items, 1)
 }
 
 func (s *CollectionManagerSuite) Test_DeleteCollection_SoftDeletesCascade() {
-	ctx, cancel := context.WithTimeout(s.ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(s.Ctx, 10*time.Second)
 	defer cancel()
 
 	col := s.seedCollection(ctx, entity.Collection{
@@ -81,41 +82,41 @@ func (s *CollectionManagerSuite) Test_DeleteCollection_SoftDeletesCascade() {
 		{ItemID: uuid.New()},
 	})
 
-	err := s.managers.CollectionManager.DeleteCollection(ctx, col.ID)
-	s.r.NoError(err)
+	err := s.Managers.CollectionManager.DeleteCollection(ctx, col.ID)
+	s.R.NoError(err)
 
-	collections, err := s.repositories.CollectionRepository.List(ctx, collrepo.CollectionFilter{
+	collections, err := s.Repositories.CollectionRepository.List(ctx, collrepo.CollectionFilter{
 		IDs:            []uuid.UUID{col.ID},
 		IncludeDeleted: true,
 	})
-	s.r.NoError(err)
-	s.a.Len(collections, 1)
-	s.a.NotNil(collections[0].DeletedAt)
+	s.R.NoError(err)
+	s.A.Len(collections, 1)
+	s.A.NotNil(collections[0].DeletedAt)
 
-	items, err := s.repositories.CollectionItemRepository.ListByCollectionIDs(ctx, []uuid.UUID{col.ID}, true)
-	s.r.NoError(err)
-	s.a.Len(items, 2)
+	items, err := s.Repositories.CollectionItemRepository.ListByCollectionIDs(ctx, []uuid.UUID{col.ID}, true)
+	s.R.NoError(err)
+	s.A.Len(items, 2)
 	for _, it := range items {
-		s.a.NotNil(it.DeletedAt)
+		s.A.NotNil(it.DeletedAt)
 	}
 }
 
 func (s *CollectionManagerSuite) Test_DeleteCollection_ReturnsErrorWhenMissing() {
-	ctx, cancel := context.WithTimeout(s.ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(s.Ctx, 10*time.Second)
 	defer cancel()
 
-	err := s.managers.CollectionManager.DeleteCollection(ctx, uuid.New())
-	s.r.Error(err)
+	err := s.Managers.CollectionManager.DeleteCollection(ctx, uuid.New())
+	s.R.Error(err)
 }
 
 func (s *CollectionManagerSuite) seedCollection(ctx context.Context, collection entity.Collection, items []entity.CollectionItem) *entity.Collection {
-	created, err := s.repositories.CollectionRepository.Create(ctx, &collection)
-	s.r.NoError(err)
+	created, err := s.Repositories.CollectionRepository.Create(ctx, &collection)
+	s.R.NoError(err)
 
 	for i := range items {
 		items[i].CollectionID = created.ID
-		_, err := s.repositories.CollectionItemRepository.Create(ctx, &items[i])
-		s.r.NoError(err)
+		_, err := s.Repositories.CollectionItemRepository.Create(ctx, &items[i])
+		s.R.NoError(err)
 	}
 
 	return created
