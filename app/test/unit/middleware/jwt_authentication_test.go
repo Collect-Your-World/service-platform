@@ -12,9 +12,9 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/suite"
 
-	"backend/service-platform/app/api/middleware"
 	"backend/service-platform/app/internal/config"
-	"backend/service-platform/app/internal/runtime"
+	"backend/service-platform/app/internal/platform/middleware"
+	"backend/service-platform/app/internal/platform/runtime"
 	jwtPkg "backend/service-platform/app/pkg/jwt"
 
 	"go.uber.org/zap"

@@ -1,8 +1,7 @@
 package queue
 
 import (
-	"backend/service-platform/app/database/constant/job"
-	"backend/service-platform/app/database/entity"
+	"backend/service-platform/app/internal/job/entities"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -10,6 +9,8 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
+
+	job "backend/service-platform/app/internal/job/constants"
 )
 
 const (

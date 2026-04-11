@@ -5,8 +5,8 @@
 package mocks
 
 import (
-	"backend/service-platform/app/database/entity"
-	"backend/service-platform/app/database/repository"
+	"backend/service-platform/app/internal/collection/entities"
+	collrepo "backend/service-platform/app/internal/collection/repositories"
 	"context"
 
 	"github.com/google/uuid"
@@ -245,7 +245,7 @@ func (_c *MockRarityConfigManager_GetByID_Call) RunAndReturn(run func(ctx contex
 }
 
 // List provides a mock function for the type MockRarityConfigManager
-func (_mock *MockRarityConfigManager) List(ctx context.Context, filter repository.RarityConfigFilter) ([]entity.RarityConfig, error) {
+func (_mock *MockRarityConfigManager) List(ctx context.Context, filter collrepo.RarityConfigFilter) ([]entity.RarityConfig, error) {
 	ret := _mock.Called(ctx, filter)
 
 	if len(ret) == 0 {
@@ -254,17 +254,17 @@ func (_mock *MockRarityConfigManager) List(ctx context.Context, filter repositor
 
 	var r0 []entity.RarityConfig
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repository.RarityConfigFilter) ([]entity.RarityConfig, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, collrepo.RarityConfigFilter) ([]entity.RarityConfig, error)); ok {
 		return returnFunc(ctx, filter)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repository.RarityConfigFilter) []entity.RarityConfig); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, collrepo.RarityConfigFilter) []entity.RarityConfig); ok {
 		r0 = returnFunc(ctx, filter)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]entity.RarityConfig)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, repository.RarityConfigFilter) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, collrepo.RarityConfigFilter) error); ok {
 		r1 = returnFunc(ctx, filter)
 	} else {
 		r1 = ret.Error(1)
@@ -279,20 +279,20 @@ type MockRarityConfigManager_List_Call struct {
 
 // List is a helper method to define mock.On call
 //   - ctx context.Context
-//   - filter repository.RarityConfigFilter
+//   - filter collrepo.RarityConfigFilter
 func (_e *MockRarityConfigManager_Expecter) List(ctx interface{}, filter interface{}) *MockRarityConfigManager_List_Call {
 	return &MockRarityConfigManager_List_Call{Call: _e.mock.On("List", ctx, filter)}
 }
 
-func (_c *MockRarityConfigManager_List_Call) Run(run func(ctx context.Context, filter repository.RarityConfigFilter)) *MockRarityConfigManager_List_Call {
+func (_c *MockRarityConfigManager_List_Call) Run(run func(ctx context.Context, filter collrepo.RarityConfigFilter)) *MockRarityConfigManager_List_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 repository.RarityConfigFilter
+		var arg1 collrepo.RarityConfigFilter
 		if args[1] != nil {
-			arg1 = args[1].(repository.RarityConfigFilter)
+			arg1 = args[1].(collrepo.RarityConfigFilter)
 		}
 		run(
 			arg0,
@@ -307,7 +307,7 @@ func (_c *MockRarityConfigManager_List_Call) Return(rarityConfigs []entity.Rarit
 	return _c
 }
 
-func (_c *MockRarityConfigManager_List_Call) RunAndReturn(run func(ctx context.Context, filter repository.RarityConfigFilter) ([]entity.RarityConfig, error)) *MockRarityConfigManager_List_Call {
+func (_c *MockRarityConfigManager_List_Call) RunAndReturn(run func(ctx context.Context, filter collrepo.RarityConfigFilter) ([]entity.RarityConfig, error)) *MockRarityConfigManager_List_Call {
 	_c.Call.Return(run)
 	return _c
 }

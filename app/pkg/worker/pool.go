@@ -1,8 +1,8 @@
 package worker
 
 import (
-	"backend/service-platform/app/database/entity"
-	"backend/service-platform/app/database/repository"
+	"backend/service-platform/app/internal/job/entities"
+	jobrepo "backend/service-platform/app/internal/job/repositories"
 	"backend/service-platform/app/pkg/queue"
 	"context"
 	"fmt"
@@ -31,7 +31,7 @@ type PoolStats struct {
 type workerPool struct {
 	workers         int
 	queue           queue.Queue
-	jobRepo         repository.JobRepository
+	jobRepo         jobrepo.JobRepository
 	handlerRegistry JobHandlerRegistry
 	logger          *zap.Logger
 
@@ -46,7 +46,7 @@ type workerPool struct {
 func NewWorkerPool(
 	workers int,
 	queue queue.Queue,
-	jobRepo repository.JobRepository,
+	jobRepo jobrepo.JobRepository,
 	handlerRegistry JobHandlerRegistry,
 	logger *zap.Logger,
 ) Pool {

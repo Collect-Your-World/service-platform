@@ -1,7 +1,7 @@
 package eodhd
 
 import (
-	"backend/service-platform/app/internal/runtime"
+	"backend/service-platform/app/internal/platform/runtime"
 	"context"
 	"encoding/json"
 	"fmt"

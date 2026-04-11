@@ -5,8 +5,7 @@
 package mocks
 
 import (
-	"backend/service-platform/app/api/client/request"
-	"backend/service-platform/app/api/client/response"
+	authmodels "backend/service-platform/app/internal/auth/models"
 	"context"
 
 	mock "github.com/stretchr/testify/mock"
@@ -40,26 +39,26 @@ func (_m *MockAuthManager) EXPECT() *MockAuthManager_Expecter {
 }
 
 // Login provides a mock function for the type MockAuthManager
-func (_mock *MockAuthManager) Login(ctx context.Context, request1 request.AuthUserRequest) (*response.AuthResponse, error) {
+func (_mock *MockAuthManager) Login(ctx context.Context, request1 authmodels.AuthUserRequest) (*authmodels.AuthResponse, error) {
 	ret := _mock.Called(ctx, request1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Login")
 	}
 
-	var r0 *response.AuthResponse
+	var r0 *authmodels.AuthResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, request.AuthUserRequest) (*response.AuthResponse, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authmodels.AuthUserRequest) (*authmodels.AuthResponse, error)); ok {
 		return returnFunc(ctx, request1)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, request.AuthUserRequest) *response.AuthResponse); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authmodels.AuthUserRequest) *authmodels.AuthResponse); ok {
 		r0 = returnFunc(ctx, request1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*response.AuthResponse)
+			r0 = ret.Get(0).(*authmodels.AuthResponse)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, request.AuthUserRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authmodels.AuthUserRequest) error); ok {
 		r1 = returnFunc(ctx, request1)
 	} else {
 		r1 = ret.Error(1)
@@ -74,20 +73,20 @@ type MockAuthManager_Login_Call struct {
 
 // Login is a helper method to define mock.On call
 //   - ctx context.Context
-//   - request1 request.AuthUserRequest
+//   - request1 authmodels.AuthUserRequest
 func (_e *MockAuthManager_Expecter) Login(ctx interface{}, request1 interface{}) *MockAuthManager_Login_Call {
 	return &MockAuthManager_Login_Call{Call: _e.mock.On("Login", ctx, request1)}
 }
 
-func (_c *MockAuthManager_Login_Call) Run(run func(ctx context.Context, request1 request.AuthUserRequest)) *MockAuthManager_Login_Call {
+func (_c *MockAuthManager_Login_Call) Run(run func(ctx context.Context, request1 authmodels.AuthUserRequest)) *MockAuthManager_Login_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 request.AuthUserRequest
+		var arg1 authmodels.AuthUserRequest
 		if args[1] != nil {
-			arg1 = args[1].(request.AuthUserRequest)
+			arg1 = args[1].(authmodels.AuthUserRequest)
 		}
 		run(
 			arg0,
@@ -97,18 +96,18 @@ func (_c *MockAuthManager_Login_Call) Run(run func(ctx context.Context, request1
 	return _c
 }
 
-func (_c *MockAuthManager_Login_Call) Return(authResponse *response.AuthResponse, err error) *MockAuthManager_Login_Call {
+func (_c *MockAuthManager_Login_Call) Return(authResponse *authmodels.AuthResponse, err error) *MockAuthManager_Login_Call {
 	_c.Call.Return(authResponse, err)
 	return _c
 }
 
-func (_c *MockAuthManager_Login_Call) RunAndReturn(run func(ctx context.Context, request1 request.AuthUserRequest) (*response.AuthResponse, error)) *MockAuthManager_Login_Call {
+func (_c *MockAuthManager_Login_Call) RunAndReturn(run func(ctx context.Context, request1 authmodels.AuthUserRequest) (*authmodels.AuthResponse, error)) *MockAuthManager_Login_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Logout provides a mock function for the type MockAuthManager
-func (_mock *MockAuthManager) Logout(ctx context.Context, request1 request.LogoutRequest) error {
+func (_mock *MockAuthManager) Logout(ctx context.Context, request1 authmodels.LogoutRequest) error {
 	ret := _mock.Called(ctx, request1)
 
 	if len(ret) == 0 {
@@ -116,7 +115,7 @@ func (_mock *MockAuthManager) Logout(ctx context.Context, request1 request.Logou
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, request.LogoutRequest) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authmodels.LogoutRequest) error); ok {
 		r0 = returnFunc(ctx, request1)
 	} else {
 		r0 = ret.Error(0)
@@ -131,20 +130,20 @@ type MockAuthManager_Logout_Call struct {
 
 // Logout is a helper method to define mock.On call
 //   - ctx context.Context
-//   - request1 request.LogoutRequest
+//   - request1 authmodels.LogoutRequest
 func (_e *MockAuthManager_Expecter) Logout(ctx interface{}, request1 interface{}) *MockAuthManager_Logout_Call {
 	return &MockAuthManager_Logout_Call{Call: _e.mock.On("Logout", ctx, request1)}
 }
 
-func (_c *MockAuthManager_Logout_Call) Run(run func(ctx context.Context, request1 request.LogoutRequest)) *MockAuthManager_Logout_Call {
+func (_c *MockAuthManager_Logout_Call) Run(run func(ctx context.Context, request1 authmodels.LogoutRequest)) *MockAuthManager_Logout_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 request.LogoutRequest
+		var arg1 authmodels.LogoutRequest
 		if args[1] != nil {
-			arg1 = args[1].(request.LogoutRequest)
+			arg1 = args[1].(authmodels.LogoutRequest)
 		}
 		run(
 			arg0,
@@ -159,32 +158,32 @@ func (_c *MockAuthManager_Logout_Call) Return(err error) *MockAuthManager_Logout
 	return _c
 }
 
-func (_c *MockAuthManager_Logout_Call) RunAndReturn(run func(ctx context.Context, request1 request.LogoutRequest) error) *MockAuthManager_Logout_Call {
+func (_c *MockAuthManager_Logout_Call) RunAndReturn(run func(ctx context.Context, request1 authmodels.LogoutRequest) error) *MockAuthManager_Logout_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RefreshToken provides a mock function for the type MockAuthManager
-func (_mock *MockAuthManager) RefreshToken(ctx context.Context, request1 request.RefreshTokenRequest) (*response.AuthResponse, error) {
+func (_mock *MockAuthManager) RefreshToken(ctx context.Context, request1 authmodels.RefreshTokenRequest) (*authmodels.AuthResponse, error) {
 	ret := _mock.Called(ctx, request1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RefreshToken")
 	}
 
-	var r0 *response.AuthResponse
+	var r0 *authmodels.AuthResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, request.RefreshTokenRequest) (*response.AuthResponse, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authmodels.RefreshTokenRequest) (*authmodels.AuthResponse, error)); ok {
 		return returnFunc(ctx, request1)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, request.RefreshTokenRequest) *response.AuthResponse); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authmodels.RefreshTokenRequest) *authmodels.AuthResponse); ok {
 		r0 = returnFunc(ctx, request1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*response.AuthResponse)
+			r0 = ret.Get(0).(*authmodels.AuthResponse)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, request.RefreshTokenRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authmodels.RefreshTokenRequest) error); ok {
 		r1 = returnFunc(ctx, request1)
 	} else {
 		r1 = ret.Error(1)
@@ -199,20 +198,20 @@ type MockAuthManager_RefreshToken_Call struct {
 
 // RefreshToken is a helper method to define mock.On call
 //   - ctx context.Context
-//   - request1 request.RefreshTokenRequest
+//   - request1 authmodels.RefreshTokenRequest
 func (_e *MockAuthManager_Expecter) RefreshToken(ctx interface{}, request1 interface{}) *MockAuthManager_RefreshToken_Call {
 	return &MockAuthManager_RefreshToken_Call{Call: _e.mock.On("RefreshToken", ctx, request1)}
 }
 
-func (_c *MockAuthManager_RefreshToken_Call) Run(run func(ctx context.Context, request1 request.RefreshTokenRequest)) *MockAuthManager_RefreshToken_Call {
+func (_c *MockAuthManager_RefreshToken_Call) Run(run func(ctx context.Context, request1 authmodels.RefreshTokenRequest)) *MockAuthManager_RefreshToken_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 request.RefreshTokenRequest
+		var arg1 authmodels.RefreshTokenRequest
 		if args[1] != nil {
-			arg1 = args[1].(request.RefreshTokenRequest)
+			arg1 = args[1].(authmodels.RefreshTokenRequest)
 		}
 		run(
 			arg0,
@@ -222,18 +221,18 @@ func (_c *MockAuthManager_RefreshToken_Call) Run(run func(ctx context.Context, r
 	return _c
 }
 
-func (_c *MockAuthManager_RefreshToken_Call) Return(authResponse *response.AuthResponse, err error) *MockAuthManager_RefreshToken_Call {
+func (_c *MockAuthManager_RefreshToken_Call) Return(authResponse *authmodels.AuthResponse, err error) *MockAuthManager_RefreshToken_Call {
 	_c.Call.Return(authResponse, err)
 	return _c
 }
 
-func (_c *MockAuthManager_RefreshToken_Call) RunAndReturn(run func(ctx context.Context, request1 request.RefreshTokenRequest) (*response.AuthResponse, error)) *MockAuthManager_RefreshToken_Call {
+func (_c *MockAuthManager_RefreshToken_Call) RunAndReturn(run func(ctx context.Context, request1 authmodels.RefreshTokenRequest) (*authmodels.AuthResponse, error)) *MockAuthManager_RefreshToken_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Register provides a mock function for the type MockAuthManager
-func (_mock *MockAuthManager) Register(ctx context.Context, request1 request.RegisterRequest) error {
+func (_mock *MockAuthManager) Register(ctx context.Context, request1 authmodels.RegisterRequest) error {
 	ret := _mock.Called(ctx, request1)
 
 	if len(ret) == 0 {
@@ -241,7 +240,7 @@ func (_mock *MockAuthManager) Register(ctx context.Context, request1 request.Reg
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, request.RegisterRequest) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authmodels.RegisterRequest) error); ok {
 		r0 = returnFunc(ctx, request1)
 	} else {
 		r0 = ret.Error(0)
@@ -256,20 +255,20 @@ type MockAuthManager_Register_Call struct {
 
 // Register is a helper method to define mock.On call
 //   - ctx context.Context
-//   - request1 request.RegisterRequest
+//   - request1 authmodels.RegisterRequest
 func (_e *MockAuthManager_Expecter) Register(ctx interface{}, request1 interface{}) *MockAuthManager_Register_Call {
 	return &MockAuthManager_Register_Call{Call: _e.mock.On("Register", ctx, request1)}
 }
 
-func (_c *MockAuthManager_Register_Call) Run(run func(ctx context.Context, request1 request.RegisterRequest)) *MockAuthManager_Register_Call {
+func (_c *MockAuthManager_Register_Call) Run(run func(ctx context.Context, request1 authmodels.RegisterRequest)) *MockAuthManager_Register_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 request.RegisterRequest
+		var arg1 authmodels.RegisterRequest
 		if args[1] != nil {
-			arg1 = args[1].(request.RegisterRequest)
+			arg1 = args[1].(authmodels.RegisterRequest)
 		}
 		run(
 			arg0,
@@ -284,7 +283,7 @@ func (_c *MockAuthManager_Register_Call) Return(err error) *MockAuthManager_Regi
 	return _c
 }
 
-func (_c *MockAuthManager_Register_Call) RunAndReturn(run func(ctx context.Context, request1 request.RegisterRequest) error) *MockAuthManager_Register_Call {
+func (_c *MockAuthManager_Register_Call) RunAndReturn(run func(ctx context.Context, request1 authmodels.RegisterRequest) error) *MockAuthManager_Register_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -1,13 +1,13 @@
 package integration
 
 import (
-	"backend/service-platform/app/database/constant/job"
-	"backend/service-platform/app/database/entity"
-	"backend/service-platform/app/database/repository"
-	"backend/service-platform/app/manager"
+	"backend/service-platform/app/internal/job/constants"
+	"backend/service-platform/app/internal/job/entities"
+	jobmanagers "backend/service-platform/app/internal/job/managers"
+	jobrepo "backend/service-platform/app/internal/job/repositories"
+	worker "backend/service-platform/app/internal/worker"
 	"backend/service-platform/app/pkg/queue"
 	"backend/service-platform/app/pkg/sqs"
-	service "backend/service-platform/app/service"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -22,9 +22,9 @@ import (
 
 type SQSSuite struct {
 	RouterSuite
-	sqsListenerService *service.SQSListenerService
-	workerService      *service.WorkerService
-	jobManager         manager.JobManager
+	sqsListenerService *worker.SQSListenerService
+	workerService      *worker.WorkerService
+	jobManager         jobmanagers.JobManager
 	sqsQueue           *sqs.Queue
 	sqsClient          *sqs.Client
 	testQueueURL       string
@@ -106,21 +106,21 @@ func (s *SQSSuite) createSQSServices() {
 
 	// Create worker service for SQS integration
 	workerConfig := s.resource.Config.WorkerConfig
-	s.workerService = service.NewWorkerService(s.resource, workerConfig)
+	s.workerService = worker.NewWorkerService(s.resource, workerConfig)
 
 	// Create Redis queue and job manager
 	redisQueue := queue.NewRedisQueue(s.resource.Redis.GetUniversalClient(), s.resource.Logger)
-	jobRepo := repository.NewJobRepository(s.resource)
-	s.jobManager = manager.NewJobManager(jobRepo, redisQueue, s.resource.Logger)
+	jobRepo := jobrepo.NewJobRepository(s.resource)
+	s.jobManager = jobmanagers.NewJobManager(jobRepo, redisQueue, s.resource.Logger)
 
 	// Create SQS listener service using the interface{} approach
-	sqsListenerConfig := service.SQSListenerConfig{
+	sqsListenerConfig := worker.SQSListenerConfig{
 		SQSConfig:  sqsConfig,
 		JobManager: s.jobManager,
 		QueueURLs:  []string{}, // Use all queues
 	}
 
-	s.sqsListenerService, err = service.NewSQSListenerService(s.resource, sqsListenerConfig)
+	s.sqsListenerService, err = worker.NewSQSListenerService(s.resource, sqsListenerConfig)
 	if err != nil {
 		s.T().Skipf("Failed to create SQS listener service (SQS not available): %v", err)
 		return

@@ -1,13 +1,14 @@
 package handlers
 
 import (
-	"backend/service-platform/app/database/constant/job"
-	"backend/service-platform/app/database/entity"
+	"backend/service-platform/app/internal/job/entities"
 	"context"
 	"errors"
 	"time"
 
 	"go.uber.org/zap"
+
+	job "backend/service-platform/app/internal/job/constants"
 )
 
 type KYCVerificationHandler struct {

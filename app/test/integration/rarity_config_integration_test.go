@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"backend/service-platform/app/database/entity"
-	"backend/service-platform/app/database/repository"
+	"backend/service-platform/app/internal/collection/entities"
+	collrepo "backend/service-platform/app/internal/collection/repositories"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 )
@@ -49,7 +49,7 @@ func (s *RarityConfigIntegrationSuite) Test_CreateFindUpdateList_RarityConfig() 
 	s.a.Equal("Common Updated", updated.Label)
 
 	// List
-	list, err := s.repositories.RarityConfigRepository.List(ctx, repository.RarityConfigFilter{Codes: []string{created.Code}})
+	list, err := s.repositories.RarityConfigRepository.List(ctx, collrepo.RarityConfigFilter{Codes: []string{created.Code}})
 	s.r.NoError(err)
 	s.a.Len(list, 1)
 	s.a.Equal(created.ID, list[0].ID)

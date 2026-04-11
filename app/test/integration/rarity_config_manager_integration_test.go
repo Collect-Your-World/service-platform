@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"backend/service-platform/app/database/entity"
-	"backend/service-platform/app/database/repository"
+	"backend/service-platform/app/internal/collection/entities"
+	collrepo "backend/service-platform/app/internal/collection/repositories"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -41,7 +41,7 @@ func (s *RarityConfigManagerSuite) Test_CreateFindUpdateList_RarityConfigManager
 	s.a.Equal("Updated", updated.Label)
 
 	// list
-	list, err := s.managers.RarityConfigManager.List(ctx, repository.RarityConfigFilter{Codes: []string{created.Code}})
+	list, err := s.managers.RarityConfigManager.List(ctx, collrepo.RarityConfigFilter{Codes: []string{created.Code}})
 	s.r.NoError(err)
 	s.a.Len(list, 1)
 }

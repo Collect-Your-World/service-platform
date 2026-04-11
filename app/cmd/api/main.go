@@ -15,9 +15,9 @@ import (
 	"github.com/go-resty/resty/v2"
 	"go.uber.org/zap"
 
-	server "backend/service-platform/app/api"
 	"backend/service-platform/app/internal/config"
-	"backend/service-platform/app/internal/runtime"
+	"backend/service-platform/app/internal/platform"
+	"backend/service-platform/app/internal/platform/runtime"
 	"backend/service-platform/app/pkg/db"
 	"backend/service-platform/app/pkg/logging"
 	"backend/service-platform/app/pkg/redis"
@@ -118,8 +118,8 @@ func setupExternalClients(ctx context.Context, cfg config.ApplicationConfig, log
 	}
 }
 
-func createServer(cfg config.ApplicationConfig, logger *zap.Logger, database *db.DB, redisClient redis.Redis, clients ExternalClients) server.Server {
-	return server.Server{
+func createServer(cfg config.ApplicationConfig, logger *zap.Logger, database *db.DB, redisClient redis.Redis, clients ExternalClients) platform.Server {
+	return platform.Server{
 		Config:     cfg,
 		Logger:     logger,
 		DB:         database,

@@ -1,9 +1,9 @@
 package integration
 
 import (
-	collectionconst "backend/service-platform/app/database/constant/collection"
-	"backend/service-platform/app/database/constant/currency"
-	"backend/service-platform/app/database/entity"
+	collectionconst "backend/service-platform/app/internal/collection/constants/collection"
+	"backend/service-platform/app/internal/collection/entities"
+	"backend/service-platform/app/internal/user/constants/currency"
 	"context"
 	"database/sql"
 	"testing"
