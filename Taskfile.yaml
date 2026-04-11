@@ -59,12 +59,12 @@ tasks:
       - flyway clean migrate -user={{.DB_USER}} -password={{.DB_PASSWORD}} -url={{.FLYWAY_URL_TEST}}
 
   integration-tests:
-    summary: Run integration tests
+    summary: Run all tests (integration and unit)
     env:
       APP_ENV: test
       INTEGRATION_TEST: true
     cmds:
-      - go test -v ./app/test/integration/... -count=1 && echo "Integration tests passed"
+      - go test -p 1 -v ./... -count=1 && echo "All tests passed"
   mockery:
     summary: Generate mocks using mockery
     cmds:

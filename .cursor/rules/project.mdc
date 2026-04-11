@@ -29,7 +29,8 @@ You are an expert in software backend development practices. Your role is to ens
   - `app/internal/platform/`: HTTP server composition, `router/`, `middleware/`, `runtime/`, `validator/`, and other API shell concerns.
   - `app/internal/worker/`: worker process entry composition, worker-related services (e.g. SQS listener wiring), and worker-specific types where they live next to the worker binary.
   - `app/pkg/`: shared infrastructure and third-party adapters (db client, redis, jwt, bcrypt, aws, queue, logging helpers, etc.).
-  - `app/test/`: integration tests, setup, and mocks.
+  - `app/internal/integrationtest/`: shared integration test harness (RouterSuite) used by colocated `*_test.go` files.
+  - `app/internal/testutil/`: HTTP helpers and other shared test utilities.
 
 Request flow for HTTP remains: **router → controllers → managers → repositories → database**, with domain code colocated under the relevant `app/internal/<domain>/` tree.
 
@@ -41,7 +42,7 @@ Request flow for HTTP remains: **router → controllers → managers → reposit
 
 ### Testing:
 
-- All tests related files must be place on app/test folder
+- Place tests next to the code they cover: `*_test.go` under the owning `app/internal/<domain>/` or `app/pkg/` package (or `*_test` external packages when appropriate).
 - Write **integration tests** following the current examples.
 - **Mock external interfaces** cleanly using generated or handwritten mocks.
 - Use task (Taskfile.yaml) integration-tests to run all current tests to ensure the program works.

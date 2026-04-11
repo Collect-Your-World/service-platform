@@ -11,13 +11,13 @@ require-template-schema-exists: true
 template: testify
 template-schema: '{{.Template}}.schema.json'
 packages:
-  backend/service-platform/app/manager:
+  # Recursive: new packages under app/internal pick up mocks without editing this file.
+  # Output: <interface package dir>/mocks/mock_*.go. Skips subpaths ending in /mocks.
+  backend/service-platform/app/internal:
     config:
       all: true
+      recursive: true
       include-auto-generated: true
-      dir: 'app/test/mocks/managers'
-  backend/service-platform/app/pkg/clients:
-    config:
-      all: true
-      include-auto-generated: true
-      dir: 'app/test/mocks/clients'
+      dir: '{{.InterfaceDir}}/mocks'
+      exclude-subpkg-regex:
+        - '.*/mocks(/|$)'
