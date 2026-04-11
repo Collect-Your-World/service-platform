@@ -35,7 +35,7 @@ Run `task --list` to see all available tasks:
 - `task fmt` - Format Go code
 - `task run` - Run the Go application
 - `task integration-tests` - Run all tests (`-p 1` avoids parallel packages contending on the same test database; requires test DB and infra for integration suites)
-- `task mockery` - Generate mocks for unit tests
+- `task mockery` - Generate testify mocks for interfaces under `app/internal` (see `.mockery.yml`)
 
 #### Swagger generation
 
