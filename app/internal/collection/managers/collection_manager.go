@@ -25,6 +25,7 @@ type CollectionWithItems struct {
 type ListCollectionsFilter struct {
 	IDs              []uuid.UUID
 	Names            []string
+	Slugs            []string
 	Types            []collectionconst.Type
 	RewardCurrencies []currency.Currency
 	RewardAmounts    []int64
@@ -57,6 +58,7 @@ func (m *DefaultCollectionManager) ListCollections(ctx context.Context, filter L
 	repoFilter := collrepo.CollectionFilter{
 		IDs:              filter.IDs,
 		Names:            filter.Names,
+		Slugs:            filter.Slugs,
 		Types:            filter.Types,
 		RewardCurrencies: filter.RewardCurrencies,
 		RewardAmounts:    filter.RewardAmounts,

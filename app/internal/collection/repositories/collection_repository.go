@@ -14,6 +14,7 @@ import (
 type CollectionFilter struct {
 	IDs              []uuid.UUID
 	Names            []string
+	Slugs            []string
 	Types            []collectionconst.Type
 	RewardCurrencies []currency.Currency
 	RewardAmounts    []int64
@@ -29,6 +30,7 @@ type CollectionRepository interface {
 	Create(ctx context.Context, collection *entity.Collection) (*entity.Collection, error)
 	Update(ctx context.Context, collection *entity.Collection) (*entity.Collection, error)
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.Collection, error)
+	FindBySlug(ctx context.Context, slug string) (*entity.Collection, error)
 	List(ctx context.Context, filter CollectionFilter) ([]entity.Collection, error)
 	SoftDelete(ctx context.Context, exec bun.IDB, id uuid.UUID) (int64, error)
 }
@@ -76,6 +78,19 @@ func (r *DefaultCollectionRepository) FindByID(ctx context.Context, id uuid.UUID
 	return collection, nil
 }
 
+func (r *DefaultCollectionRepository) FindBySlug(ctx context.Context, slug string) (*entity.Collection, error) {
+	collection := new(entity.Collection)
+	err := r.res.DB.ReplicaNewSelect().
+		Model(collection).
+		Where("slug = ?", slug).
+		Where("deleted_at IS NULL").
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return collection, nil
+}
+
 func (r *DefaultCollectionRepository) List(ctx context.Context, filter CollectionFilter) ([]entity.Collection, error) {
 	var collections []entity.Collection
 	query := r.res.DB.ReplicaNewSelect().
@@ -93,6 +108,9 @@ func (r *DefaultCollectionRepository) List(ctx context.Context, filter Collectio
 	}
 	if len(filter.Names) > 0 {
 		query = query.Where("name IN (?)", bun.In(filter.Names))
+	}
+	if len(filter.Slugs) > 0 {
+		query = query.Where("slug IN (?)", bun.In(filter.Slugs))
 	}
 	if len(filter.Types) > 0 {
 		query = query.Where("collection_type IN (?)", bun.In(filter.Types))

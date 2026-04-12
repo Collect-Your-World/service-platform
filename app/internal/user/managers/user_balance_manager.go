@@ -11,7 +11,7 @@ import (
 )
 
 type UserBalanceManager interface {
-	RecordChange(ctx context.Context, userID uuid.UUID, cur currency.Currency, delta int64, txType txconst.TransactionType, source txconst.Source, status txconst.Status) (*entity.UserBalance, *entity.UserBalanceTransaction, error)
+	RecordChange(ctx context.Context, userID uuid.UUID, cur currency.Currency, delta int64, txType txconst.TransactionType, source txconst.Source, status txconst.Status, metadata map[string]interface{}) (*entity.UserBalance, *entity.UserBalanceTransaction, error)
 	GetAllBalances(ctx context.Context, userID uuid.UUID) (map[string]int64, error)
 	GetBalanceByCurrency(ctx context.Context, userID uuid.UUID, cur currency.Currency) (map[string]int64, error)
 	GetHistory(ctx context.Context, userID uuid.UUID, _currency *currency.Currency, _type *txconst.TransactionType) ([]entity.UserBalanceTransaction, error)
@@ -26,19 +26,29 @@ func NewUserBalanceManager(balances userrepo.UserBalanceRepository, txs userrepo
 	return &DefaultUserBalanceManager{balancesRepo: balances, transactionsRepo: txs}
 }
 
-func (m *DefaultUserBalanceManager) RecordChange(ctx context.Context, userID uuid.UUID, cur currency.Currency, delta int64, txType txconst.TransactionType, source txconst.Source, status txconst.Status) (*entity.UserBalance, *entity.UserBalanceTransaction, error) {
-	updatedBalance, err := m.balancesRepo.UpsertAndAddDelta(ctx, userID, cur, delta)
+func (m *DefaultUserBalanceManager) RecordChange(ctx context.Context, userID uuid.UUID, cur currency.Currency, delta int64, txType txconst.TransactionType, source txconst.Source, status txconst.Status, metadata map[string]interface{}) (*entity.UserBalance, *entity.UserBalanceTransaction, error) {
+	updatedBalance, balanceBefore, err := m.balancesRepo.UpsertAndAddDelta(ctx, userID, cur, delta)
 	if err != nil {
 		return nil, nil, err
 	}
 
+	var meta entity.TransactionMetadata
+	if metadata != nil {
+		meta = entity.TransactionMetadata(metadata)
+	} else {
+		meta = entity.TransactionMetadata{}
+	}
+
 	tx := &entity.UserBalanceTransaction{
-		UserID:   userID,
-		Amount:   delta,
-		Currency: cur,
-		Type:     txType,
-		Source:   source,
-		Status:   status,
+		UserID:        userID,
+		Amount:        delta,
+		Currency:      cur,
+		Type:          txType,
+		Source:        source,
+		Status:        status,
+		Metadata:      meta,
+		BalanceBefore: balanceBefore,
+		BalanceAfter:  updatedBalance.Balance,
 	}
 	createdTx, err := m.transactionsRepo.Create(ctx, tx)
 	if err != nil {

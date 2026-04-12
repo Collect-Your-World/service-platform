@@ -16,7 +16,7 @@ type UserBalanceRepository interface {
 	Create(ctx context.Context, balance *entity.UserBalance) (*entity.UserBalance, error)
 	FindByUserAndCurrency(ctx context.Context, userID uuid.UUID, currency currency.Currency) (*entity.UserBalance, error)
 	FindAllByUserID(ctx context.Context, userID uuid.UUID) ([]entity.UserBalance, error)
-	UpsertAndAddDelta(ctx context.Context, userID uuid.UUID, currency currency.Currency, delta int64) (*entity.UserBalance, error)
+	UpsertAndAddDelta(ctx context.Context, userID uuid.UUID, currency currency.Currency, delta int64) (*entity.UserBalance, int64, error)
 	DeleteAllByUserID(ctx context.Context, userID uuid.UUID) (int64, error)
 }
 
@@ -61,8 +61,9 @@ func (r *DefaultUserBalanceRepository) FindAllByUserID(ctx context.Context, user
 	return items, nil
 }
 
-func (r *DefaultUserBalanceRepository) UpsertAndAddDelta(ctx context.Context, userID uuid.UUID, currency currency.Currency, delta int64) (*entity.UserBalance, error) {
+func (r *DefaultUserBalanceRepository) UpsertAndAddDelta(ctx context.Context, userID uuid.UUID, currency currency.Currency, delta int64) (*entity.UserBalance, int64, error) {
 	var updated *entity.UserBalance
+	var balanceBefore int64
 	err := r.res.DB.RunInTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable}, func(txCtx context.Context, tx bun.Tx) error {
 		var current entity.UserBalance
 		selErr := tx.NewSelect().Model(&current).
@@ -72,8 +73,8 @@ func (r *DefaultUserBalanceRepository) UpsertAndAddDelta(ctx context.Context, us
 			For("UPDATE").
 			Scan(txCtx)
 		if selErr != nil {
-			// if no rows found, create a new one
 			if errors.Is(selErr, sql.ErrNoRows) {
+				balanceBefore = 0
 				newItem := &entity.UserBalance{UserID: userID, Currency: currency, Balance: delta}
 				if err := tx.NewInsert().Model(newItem).Returning("*").Scan(txCtx, newItem); err != nil {
 					return err
@@ -84,6 +85,7 @@ func (r *DefaultUserBalanceRepository) UpsertAndAddDelta(ctx context.Context, us
 			return selErr
 		}
 
+		balanceBefore = current.Balance
 		current.Balance = current.Balance + delta
 		var out entity.UserBalance
 		if err := tx.NewUpdate().Model(&current).WherePK().Where("deleted_at IS NULL").Returning("*").Scan(txCtx, &out); err != nil {
@@ -93,9 +95,9 @@ func (r *DefaultUserBalanceRepository) UpsertAndAddDelta(ctx context.Context, us
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return updated, nil
+	return updated, balanceBefore, nil
 }
 
 func (r *DefaultUserBalanceRepository) DeleteAllByUserID(ctx context.Context, userID uuid.UUID) (int64, error) {

@@ -14,7 +14,6 @@ type ItemManager interface {
 	CreateItem(ctx context.Context, item *entity.Item) (*entity.Item, error)
 	UpdateItem(ctx context.Context, item *entity.Item) (*entity.Item, error)
 	GetItem(ctx context.Context, id uuid.UUID) (*entity.Item, error)
-	ListItemsByCollectionIDs(ctx context.Context, collectionIDs []uuid.UUID, includeDeleted bool) ([]entity.Item, error)
 	DeleteItems(ctx context.Context, ids []uuid.UUID) error
 }
 
@@ -40,10 +39,6 @@ func (m *DefaultItemManager) UpdateItem(ctx context.Context, item *entity.Item) 
 
 func (m *DefaultItemManager) GetItem(ctx context.Context, id uuid.UUID) (*entity.Item, error) {
 	return m.items.FindByID(ctx, id)
-}
-
-func (m *DefaultItemManager) ListItemsByCollectionIDs(ctx context.Context, collectionIDs []uuid.UUID, includeDeleted bool) ([]entity.Item, error) {
-	return m.items.ListByCollectionIDs(ctx, collectionIDs, includeDeleted)
 }
 
 func (m *DefaultItemManager) DeleteItems(ctx context.Context, ids []uuid.UUID) error {

@@ -13,7 +13,6 @@ type ItemRepository interface {
 	Create(ctx context.Context, item *entity.Item) (*entity.Item, error)
 	Update(ctx context.Context, item *entity.Item) (*entity.Item, error)
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.Item, error)
-	ListByCollectionIDs(ctx context.Context, collectionIDs []uuid.UUID, includeDeleted bool) ([]entity.Item, error)
 	SoftDeleteByIDs(ctx context.Context, exec bun.IDB, ids []uuid.UUID) (int64, error)
 }
 
@@ -49,24 +48,6 @@ func (r *DefaultItemRepository) FindByID(ctx context.Context, id uuid.UUID) (*en
 		return nil, err
 	}
 	return item, nil
-}
-
-func (r *DefaultItemRepository) ListByCollectionIDs(ctx context.Context, collectionIDs []uuid.UUID, includeDeleted bool) ([]entity.Item, error) {
-	if len(collectionIDs) == 0 {
-		return []entity.Item{}, nil
-	}
-	var items []entity.Item
-	query := r.res.DB.ReplicaNewSelect().Model(&items).Where("collection_id IN (?)", bun.In(collectionIDs)).OrderExpr("created_at ASC")
-	if includeDeleted {
-		query = query.WhereAllWithDeleted()
-	} else {
-		query = query.Where("deleted_at IS NULL")
-	}
-	err := query.Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 func (r *DefaultItemRepository) SoftDeleteByIDs(ctx context.Context, exec bun.IDB, ids []uuid.UUID) (int64, error) {

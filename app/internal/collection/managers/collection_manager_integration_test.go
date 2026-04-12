@@ -2,6 +2,7 @@ package managers_test
 
 import (
 	collectionconst "backend/service-platform/app/internal/collection/constants/collection"
+	itemconst "backend/service-platform/app/internal/collection/constants/item"
 	entity "backend/service-platform/app/internal/collection/entities"
 	collmanagers "backend/service-platform/app/internal/collection/managers"
 	collrepo "backend/service-platform/app/internal/collection/repositories"
@@ -33,10 +34,7 @@ func (s *CollectionManagerSuite) Test_ListCollections_WithFilters() {
 		RewardAmount:   100,
 		RewardCurrency: currency.COIN,
 		IsEnabled:      true,
-	}, []entity.CollectionItem{
-		{ItemID: uuid.New()},
-		{ItemID: uuid.New()},
-	})
+	}, 2)
 
 	colB := s.seedCollection(ctx, entity.Collection{
 		Name:           "Pacific Trails",
@@ -44,9 +42,7 @@ func (s *CollectionManagerSuite) Test_ListCollections_WithFilters() {
 		RewardAmount:   500,
 		RewardCurrency: currency.SPIN,
 		IsEnabled:      false,
-	}, []entity.CollectionItem{
-		{ItemID: uuid.New()},
-	})
+	}, 1)
 
 	result, err := s.Managers.CollectionManager.ListCollections(ctx, collmanagers.ListCollectionsFilter{
 		Types:            []collectionconst.Type{collectionconst.Theme},
@@ -77,10 +73,7 @@ func (s *CollectionManagerSuite) Test_DeleteCollection_SoftDeletesCascade() {
 		RewardAmount:   750,
 		RewardCurrency: currency.COIN,
 		IsEnabled:      true,
-	}, []entity.CollectionItem{
-		{ItemID: uuid.New()},
-		{ItemID: uuid.New()},
-	})
+	}, 2)
 
 	err := s.Managers.CollectionManager.DeleteCollection(ctx, col.ID)
 	s.R.NoError(err)
@@ -109,13 +102,38 @@ func (s *CollectionManagerSuite) Test_DeleteCollection_ReturnsErrorWhenMissing()
 	s.R.Error(err)
 }
 
-func (s *CollectionManagerSuite) seedCollection(ctx context.Context, collection entity.Collection, items []entity.CollectionItem) *entity.Collection {
+func (s *CollectionManagerSuite) seedCollection(ctx context.Context, collection entity.Collection, numItems int) *entity.Collection {
+	if collection.Slug == "" {
+		collection.Slug = "col-" + uuid.New().String()
+	}
+	color := "#000000"
+	rc := entity.RarityConfig{
+		Code:       "T" + uuid.New().String()[:8],
+		Label:      "Test",
+		Rank:       1,
+		ColorHex:   &color,
+		DropWeight: 1,
+	}
+	createdRC, err := s.Repositories.RarityConfigRepository.Create(ctx, &rc)
+	s.R.NoError(err)
+
 	created, err := s.Repositories.CollectionRepository.Create(ctx, &collection)
 	s.R.NoError(err)
 
-	for i := range items {
-		items[i].CollectionID = created.ID
-		_, err := s.Repositories.CollectionItemRepository.Create(ctx, &items[i])
+	for i := 0; i < numItems; i++ {
+		it := &entity.Item{
+			Name:           "Item",
+			Slug:           "item-" + uuid.New().String(),
+			ItemType:       itemconst.Other,
+			RarityConfigID: createdRC.ID,
+		}
+		createdItem, err := s.Repositories.ItemRepository.Create(ctx, it)
+		s.R.NoError(err)
+		ci := &entity.CollectionItem{
+			CollectionID: created.ID,
+			ItemID:       createdItem.ID,
+		}
+		_, err = s.Repositories.CollectionItemRepository.Create(ctx, ci)
 		s.R.NoError(err)
 	}
 

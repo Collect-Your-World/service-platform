@@ -88,14 +88,21 @@ func (c *UserController) GetBalanceHistory(ec echo.Context) error {
 	}
 	dtos := make([]usermodels.BalanceTransactionResponse, 0, len(items))
 	for _, it := range items {
+		var meta map[string]interface{}
+		if it.Metadata != nil {
+			meta = map[string]interface{}(it.Metadata)
+		}
 		dtos = append(dtos, usermodels.BalanceTransactionResponse{
-			ID:        it.ID,
-			Amount:    it.Amount,
-			Currency:  string(it.Currency),
-			Type:      string(it.Type),
-			Source:    string(it.Source),
-			Status:    string(it.Status),
-			CreatedAt: it.CreatedAt,
+			ID:            it.ID,
+			Amount:        it.Amount,
+			Currency:      string(it.Currency),
+			Type:          string(it.Type),
+			Source:        string(it.Source),
+			Status:        string(it.Status),
+			Metadata:      meta,
+			BalanceBefore: it.BalanceBefore,
+			BalanceAfter:  it.BalanceAfter,
+			CreatedAt:     it.CreatedAt,
 		})
 	}
 	return ec.JSON(http.StatusOK, models.ToSuccessResponse(dtos))

@@ -1,14 +1,15 @@
 package managers_test
 
 import (
+	collectionconst "backend/service-platform/app/internal/collection/constants/collection"
+	itemconst "backend/service-platform/app/internal/collection/constants/item"
+	"backend/service-platform/app/internal/collection/entities"
 	integrationtest "backend/service-platform/app/internal/integrationtest"
+	"backend/service-platform/app/internal/user/constants/currency"
 	"context"
 	"testing"
 	"time"
 
-	collectionconst "backend/service-platform/app/internal/collection/constants/collection"
-	"backend/service-platform/app/internal/collection/entities"
-	"backend/service-platform/app/internal/user/constants/currency"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 )
@@ -24,19 +25,48 @@ func TestItemManagerSuite(t *testing.T) {
 func (s *ItemManagerSuite) Test_CreateGetUpdateDelete_ItemManager() {
 	ctx, cancel := context.WithTimeout(s.Ctx, 10*time.Second)
 	defer cancel()
-	// check if test DB has collection_id column; if not, skip manager-level test
-	var tmp int
-	q := "SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='items' AND column_name='collection_id'"
-	err := s.Resource.DB.PrimaryDb.QueryRowContext(ctx, q).Scan(&tmp)
-	if err != nil {
-		// if ErrNoRows or other, skip
-		s.T().Skip("test DB missing items.collection_id column; skipping ItemManager manager-level test")
-		return
-	}
 
-	// create collection
+	color := "#123456"
+	rc := entity.RarityConfig{Code: "M" + uuid.New().String()[:8], Label: "Common", Rank: 1, ColorHex: &color, DropWeight: 10}
+	createdRC, err := s.Repositories.RarityConfigRepository.Create(ctx, &rc)
+	s.R.NoError(err)
+
+	it := &entity.Item{
+		Name:           "Mgr Item",
+		Slug:           "mgr-item-" + uuid.New().String(),
+		Description:    nil,
+		ItemType:       itemconst.Landscape,
+		RarityConfigID: createdRC.ID,
+	}
+	created, err := s.Managers.ItemManager.CreateItem(ctx, it)
+	s.R.NoError(err)
+	s.A.Equal("Mgr Item", created.Name)
+
+	got, err := s.Managers.ItemManager.GetItem(ctx, created.ID)
+	s.R.NoError(err)
+	s.A.Equal(created.ID, got.ID)
+
+	got.Name = "Mgr Item Updated"
+	updated, err := s.Managers.ItemManager.UpdateItem(ctx, got)
+	s.R.NoError(err)
+	s.A.Equal("Mgr Item Updated", updated.Name)
+
+	err = s.Managers.ItemManager.DeleteItems(ctx, []uuid.UUID{created.ID})
+	s.R.NoError(err)
+
+	var soft entity.Item
+	err = s.Resource.DB.ReplicaNewSelect().Model(&soft).Where("id = ?", created.ID).WhereAllWithDeleted().Scan(ctx)
+	s.R.NoError(err)
+	s.A.NotNil(soft.DeletedAt)
+}
+
+func (s *ItemManagerSuite) Test_ItemManager_WithCollectionViaJoin() {
+	ctx, cancel := context.WithTimeout(s.Ctx, 10*time.Second)
+	defer cancel()
+
 	col := entity.Collection{
 		Name:           "ItemMgr Collection",
+		Slug:           "item-mgr-col-" + uuid.New().String(),
 		Type:           collectionconst.Global,
 		RewardAmount:   0,
 		RewardCurrency: currency.COIN,
@@ -45,52 +75,28 @@ func (s *ItemManagerSuite) Test_CreateGetUpdateDelete_ItemManager() {
 	createdCol, err := s.Repositories.CollectionRepository.Create(ctx, &col)
 	s.R.NoError(err)
 
-	// create rarity config
 	color := "#123456"
-	rc := entity.RarityConfig{Code: "COMMON", Label: "Common", Rank: 1, ColorHex: &color, DropWeight: 10}
+	rc := entity.RarityConfig{Code: "J" + uuid.New().String()[:8], Label: "Common", Rank: 1, ColorHex: &color, DropWeight: 10}
 	createdRC, err := s.Repositories.RarityConfigRepository.Create(ctx, &rc)
 	s.R.NoError(err)
 
-	// create item via manager
 	it := &entity.Item{
-		Name:           "Mgr Item",
-		Description:    nil,
-		RarityConfigID: &createdRC.ID,
-		CollectionID:   &createdCol.ID,
+		Name:           "Joined Item",
+		Slug:           "joined-" + uuid.New().String(),
+		ItemType:       itemconst.Food,
+		RarityConfigID: createdRC.ID,
 	}
-	created, err := s.Managers.ItemManager.CreateItem(ctx, it)
-	s.R.NoError(err)
-	s.A.Equal("Mgr Item", created.Name)
-
-	// get
-	got, err := s.Managers.ItemManager.GetItem(ctx, created.ID)
-	s.R.NoError(err)
-	s.A.Equal(created.ID, got.ID)
-
-	// update
-	got.Name = "Mgr Item Updated"
-	updated, err := s.Managers.ItemManager.UpdateItem(ctx, got)
-	s.R.NoError(err)
-	s.A.Equal("Mgr Item Updated", updated.Name)
-
-	// list by collection
-	listed, err := s.Managers.ItemManager.ListItemsByCollectionIDs(ctx, []uuid.UUID{createdCol.ID}, false)
-	s.R.NoError(err)
-	s.A.True(len(listed) >= 1)
-
-	// delete
-	err = s.Managers.ItemManager.DeleteItems(ctx, []uuid.UUID{created.ID})
+	createdItem, err := s.Managers.ItemManager.CreateItem(ctx, it)
 	s.R.NoError(err)
 
-	// ensure deleted (soft)
-	listedDeleted, err := s.Repositories.ItemRepository.ListByCollectionIDs(ctx, []uuid.UUID{createdCol.ID}, true)
+	_, err = s.Repositories.CollectionItemRepository.Create(ctx, &entity.CollectionItem{
+		CollectionID: createdCol.ID,
+		ItemID:       createdItem.ID,
+	})
 	s.R.NoError(err)
-	found := false
-	for _, it := range listedDeleted {
-		if it.ID == created.ID {
-			found = true
-			s.A.NotNil(it.DeletedAt)
-		}
-	}
-	s.A.True(found)
+
+	listed, err := s.Repositories.CollectionItemRepository.ListByCollectionIDs(ctx, []uuid.UUID{createdCol.ID}, false)
+	s.R.NoError(err)
+	s.A.Len(listed, 1)
+	s.A.Equal(createdItem.ID, listed[0].ItemID)
 }

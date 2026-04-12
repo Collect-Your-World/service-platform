@@ -264,8 +264,8 @@ func (_c *MockUserBalanceManager_GetHistory_Call) RunAndReturn(run func(ctx cont
 }
 
 // RecordChange provides a mock function for the type MockUserBalanceManager
-func (_mock *MockUserBalanceManager) RecordChange(ctx context.Context, userID uuid.UUID, cur currency.Currency, delta int64, txType transaction.TransactionType, source transaction.Source, status transaction.Status) (*entity.UserBalance, *entity.UserBalanceTransaction, error) {
-	ret := _mock.Called(ctx, userID, cur, delta, txType, source, status)
+func (_mock *MockUserBalanceManager) RecordChange(ctx context.Context, userID uuid.UUID, cur currency.Currency, delta int64, txType transaction.TransactionType, source transaction.Source, status transaction.Status, metadata map[string]interface{}) (*entity.UserBalance, *entity.UserBalanceTransaction, error) {
+	ret := _mock.Called(ctx, userID, cur, delta, txType, source, status, metadata)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RecordChange")
@@ -274,25 +274,25 @@ func (_mock *MockUserBalanceManager) RecordChange(ctx context.Context, userID uu
 	var r0 *entity.UserBalance
 	var r1 *entity.UserBalanceTransaction
 	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, currency.Currency, int64, transaction.TransactionType, transaction.Source, transaction.Status) (*entity.UserBalance, *entity.UserBalanceTransaction, error)); ok {
-		return returnFunc(ctx, userID, cur, delta, txType, source, status)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, currency.Currency, int64, transaction.TransactionType, transaction.Source, transaction.Status, map[string]interface{}) (*entity.UserBalance, *entity.UserBalanceTransaction, error)); ok {
+		return returnFunc(ctx, userID, cur, delta, txType, source, status, metadata)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, currency.Currency, int64, transaction.TransactionType, transaction.Source, transaction.Status) *entity.UserBalance); ok {
-		r0 = returnFunc(ctx, userID, cur, delta, txType, source, status)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, currency.Currency, int64, transaction.TransactionType, transaction.Source, transaction.Status, map[string]interface{}) *entity.UserBalance); ok {
+		r0 = returnFunc(ctx, userID, cur, delta, txType, source, status, metadata)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*entity.UserBalance)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, currency.Currency, int64, transaction.TransactionType, transaction.Source, transaction.Status) *entity.UserBalanceTransaction); ok {
-		r1 = returnFunc(ctx, userID, cur, delta, txType, source, status)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, currency.Currency, int64, transaction.TransactionType, transaction.Source, transaction.Status, map[string]interface{}) *entity.UserBalanceTransaction); ok {
+		r1 = returnFunc(ctx, userID, cur, delta, txType, source, status, metadata)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(*entity.UserBalanceTransaction)
 		}
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, uuid.UUID, currency.Currency, int64, transaction.TransactionType, transaction.Source, transaction.Status) error); ok {
-		r2 = returnFunc(ctx, userID, cur, delta, txType, source, status)
+	if returnFunc, ok := ret.Get(2).(func(context.Context, uuid.UUID, currency.Currency, int64, transaction.TransactionType, transaction.Source, transaction.Status, map[string]interface{}) error); ok {
+		r2 = returnFunc(ctx, userID, cur, delta, txType, source, status, metadata)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -312,11 +312,12 @@ type MockUserBalanceManager_RecordChange_Call struct {
 //   - txType transaction.TransactionType
 //   - source transaction.Source
 //   - status transaction.Status
-func (_e *MockUserBalanceManager_Expecter) RecordChange(ctx interface{}, userID interface{}, cur interface{}, delta interface{}, txType interface{}, source interface{}, status interface{}) *MockUserBalanceManager_RecordChange_Call {
-	return &MockUserBalanceManager_RecordChange_Call{Call: _e.mock.On("RecordChange", ctx, userID, cur, delta, txType, source, status)}
+//   - metadata map[string]interface{}
+func (_e *MockUserBalanceManager_Expecter) RecordChange(ctx interface{}, userID interface{}, cur interface{}, delta interface{}, txType interface{}, source interface{}, status interface{}, metadata interface{}) *MockUserBalanceManager_RecordChange_Call {
+	return &MockUserBalanceManager_RecordChange_Call{Call: _e.mock.On("RecordChange", ctx, userID, cur, delta, txType, source, status, metadata)}
 }
 
-func (_c *MockUserBalanceManager_RecordChange_Call) Run(run func(ctx context.Context, userID uuid.UUID, cur currency.Currency, delta int64, txType transaction.TransactionType, source transaction.Source, status transaction.Status)) *MockUserBalanceManager_RecordChange_Call {
+func (_c *MockUserBalanceManager_RecordChange_Call) Run(run func(ctx context.Context, userID uuid.UUID, cur currency.Currency, delta int64, txType transaction.TransactionType, source transaction.Source, status transaction.Status, metadata map[string]interface{})) *MockUserBalanceManager_RecordChange_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -346,6 +347,10 @@ func (_c *MockUserBalanceManager_RecordChange_Call) Run(run func(ctx context.Con
 		if args[6] != nil {
 			arg6 = args[6].(transaction.Status)
 		}
+		var arg7 map[string]interface{}
+		if args[7] != nil {
+			arg7 = args[7].(map[string]interface{})
+		}
 		run(
 			arg0,
 			arg1,
@@ -354,6 +359,7 @@ func (_c *MockUserBalanceManager_RecordChange_Call) Run(run func(ctx context.Con
 			arg4,
 			arg5,
 			arg6,
+			arg7,
 		)
 	})
 	return _c
@@ -364,7 +370,7 @@ func (_c *MockUserBalanceManager_RecordChange_Call) Return(userBalance *entity.U
 	return _c
 }
 
-func (_c *MockUserBalanceManager_RecordChange_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, cur currency.Currency, delta int64, txType transaction.TransactionType, source transaction.Source, status transaction.Status) (*entity.UserBalance, *entity.UserBalanceTransaction, error)) *MockUserBalanceManager_RecordChange_Call {
+func (_c *MockUserBalanceManager_RecordChange_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, cur currency.Currency, delta int64, txType transaction.TransactionType, source transaction.Source, status transaction.Status, metadata map[string]interface{}) (*entity.UserBalance, *entity.UserBalanceTransaction, error)) *MockUserBalanceManager_RecordChange_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -36,27 +36,22 @@ func (s *UserBalanceIntegrationSuite) Test_GetBalances_All_And_ByCurrency() {
 	s.R.Equal(http.StatusOK, loginCode)
 	token := loginResp.Data.AccessToken
 
-	// Initially no balances -> expect empty map
 	allResp, allCode, err := testutil.RequestHTTP[commonmodels.GeneralResponse[map[string]int64]](s.Echo, http.MethodGet, "/api/v1/users/balances", &token, nil)
 	s.R.NoError(err)
 	s.R.Equal(http.StatusOK, allCode)
 	s.A.Equal(0, len(allResp.Data))
 
-	// Fetch user id via /me
 	meResp, meCode, err := testutil.RequestHTTP[commonmodels.GeneralResponse[authmodels.MeResponse]](s.Echo, http.MethodGet, "/api/v1/auth/me", &token, nil)
 	s.R.NoError(err)
 	s.R.Equal(http.StatusOK, meCode)
-	// Record a change via manager directly
-	_, _, err = s.Managers.UserBalanceManager.RecordChange(s.Ctx, meResp.Data.ID, currency.COIN, 100, txconst.DAILY_REWARD, txconst.DAILY_LOGIN, txconst.COMPLETED)
+	_, _, err = s.Managers.UserBalanceManager.RecordChange(s.Ctx, meResp.Data.ID, currency.COIN, 100, txconst.DAILY_REWARD, txconst.DAILY_LOGIN, txconst.COMPLETED, nil)
 	s.R.NoError(err)
 
-	// Query all balances
 	allResp2, allCode2, err := testutil.RequestHTTP[commonmodels.GeneralResponse[map[string]int64]](s.Echo, http.MethodGet, "/api/v1/users/balances", &token, nil)
 	s.R.NoError(err)
 	s.R.Equal(http.StatusOK, allCode2)
 	s.A.Equal(int64(100), allResp2.Data["COIN"])
 
-	// Query by currency
 	coinResp, coinCode, err := testutil.RequestHTTP[commonmodels.GeneralResponse[map[string]int64]](s.Echo, http.MethodGet, "/api/v1/users/balances?currency=COIN", &token, nil)
 	s.R.NoError(err)
 	s.R.Equal(http.StatusOK, coinCode)
@@ -67,8 +62,7 @@ func (s *UserBalanceIntegrationSuite) Test_GetBalances_All_And_ByCurrency() {
 	s.R.Equal(http.StatusOK, spinCode)
 	s.A.Equal(int64(0), spinResp.Data["SPIN"])
 
-	// Record a change via manager directly
-	_, _, err = s.Managers.UserBalanceManager.RecordChange(s.Ctx, meResp.Data.ID, currency.SPIN, 200, txconst.AD_WATCH, txconst.VIDEO_AD, txconst.COMPLETED)
+	_, _, err = s.Managers.UserBalanceManager.RecordChange(s.Ctx, meResp.Data.ID, currency.SPIN, 200, txconst.AD_WATCH, txconst.VIDEO_AD, txconst.COMPLETED, nil)
 	s.R.NoError(err)
 
 	allResp3, allCode3, err := testutil.RequestHTTP[commonmodels.GeneralResponse[map[string]int64]](s.Echo, http.MethodGet, "/api/v1/users/balances", &token, nil)
@@ -95,18 +89,16 @@ func (s *UserBalanceIntegrationSuite) Test_GetBalanceHistory_Filtered() {
 	s.R.NoError(err)
 	s.R.Equal(http.StatusOK, meCode)
 
-	_, _, err = s.Managers.UserBalanceManager.RecordChange(s.Ctx, meResp.Data.ID, currency.COIN, 100, txconst.DAILY_REWARD, txconst.DAILY_LOGIN, txconst.COMPLETED)
+	_, _, err = s.Managers.UserBalanceManager.RecordChange(s.Ctx, meResp.Data.ID, currency.COIN, 100, txconst.DAILY_REWARD, txconst.DAILY_LOGIN, txconst.COMPLETED, map[string]interface{}{"k": "v"})
 	s.R.NoError(err)
-	_, _, err = s.Managers.UserBalanceManager.RecordChange(s.Ctx, meResp.Data.ID, currency.SPIN, 50, txconst.AD_WATCH, txconst.VIDEO_AD, txconst.COMPLETED)
+	_, _, err = s.Managers.UserBalanceManager.RecordChange(s.Ctx, meResp.Data.ID, currency.SPIN, 50, txconst.AD_WATCH, txconst.VIDEO_AD, txconst.COMPLETED, nil)
 	s.R.NoError(err)
 
-	// Missing currency should fail
 	bad, badCode, err := testutil.RequestHTTP[commonmodels.GeneralResponse[any]](s.Echo, http.MethodGet, "/api/v1/users/balances/history", &token, nil)
 	s.R.NoError(err)
 	s.R.Equal(http.StatusBadRequest, badCode)
 	s.R.Equal(http.StatusBadRequest, bad.Code)
 
-	// Filter by currency=COIN
 	coinHist, coinCode, err := testutil.RequestHTTP[commonmodels.GeneralResponse[[]usermodels.BalanceTransactionResponse]](s.Echo, http.MethodGet, "/api/v1/users/balances/history?currency=COIN", &token, nil)
 	s.R.NoError(err)
 	s.R.Equal(http.StatusOK, coinCode)
@@ -115,8 +107,10 @@ func (s *UserBalanceIntegrationSuite) Test_GetBalanceHistory_Filtered() {
 	s.A.Equal(string(txconst.DAILY_REWARD), coinHist.Data[0].Type)
 	s.A.Equal(string(txconst.DAILY_LOGIN), coinHist.Data[0].Source)
 	s.A.Equal(string(txconst.COMPLETED), coinHist.Data[0].Status)
+	s.A.Equal(int64(0), coinHist.Data[0].BalanceBefore)
+	s.A.Equal(int64(100), coinHist.Data[0].BalanceAfter)
+	s.A.Equal("v", coinHist.Data[0].Metadata["k"])
 
-	// Filter by type=AD_WATCH
 	adWatchHist, adCode, err := testutil.RequestHTTP[commonmodels.GeneralResponse[[]usermodels.BalanceTransactionResponse]](s.Echo, http.MethodGet, "/api/v1/users/balances/history?currency=SPIN&type=AD_WATCH", &token, nil)
 	s.R.NoError(err)
 	s.R.Equal(http.StatusOK, adCode)
@@ -126,7 +120,6 @@ func (s *UserBalanceIntegrationSuite) Test_GetBalanceHistory_Filtered() {
 	s.A.Equal(string(txconst.VIDEO_AD), adWatchHist.Data[0].Source)
 	s.A.Equal(string(txconst.COMPLETED), adWatchHist.Data[0].Status)
 
-	// Filter by type=AD_WATCH and currency=COIN, should return empty
 	completedHist, completedCode, err := testutil.RequestHTTP[commonmodels.GeneralResponse[[]usermodels.BalanceTransactionResponse]](s.Echo, http.MethodGet, "/api/v1/users/balances/history?currency=COIN&type=AD_WATCH", &token, nil)
 	s.R.NoError(err)
 	s.R.Equal(http.StatusOK, completedCode)
