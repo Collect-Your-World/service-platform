@@ -32,7 +32,9 @@ CREATE TRIGGER trigger_rarity_configs_updated_at
 CREATE TABLE items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(100) NOT NULL,
+    slug VARCHAR(150) NOT NULL,
     description TEXT,
+    item_type VARCHAR(30) NOT NULL DEFAULT 'OTHER',
     rarity_config_id UUID NOT NULL,
     image_url TEXT,
     country_id UUID,
@@ -41,6 +43,9 @@ CREATE TABLE items (
     updated_at TIMESTAMPTZ,
     deleted_at TIMESTAMPTZ
 );
+
+CREATE UNIQUE INDEX unique_idx_items_slug ON items (slug)
+  WHERE deleted_at IS NULL;
 
 CREATE INDEX idx_items_rarity_config_id ON items (rarity_config_id)
   WHERE deleted_at IS NULL;
@@ -51,3 +56,9 @@ CREATE INDEX idx_items_name ON items (name)
 CREATE TRIGGER trigger_items_updated_at
   BEFORE UPDATE ON items
   FOR EACH ROW EXECUTE FUNCTION trigger_updated_at();
+
+ALTER TABLE items
+  ADD CONSTRAINT fk_items_rarity_config_id FOREIGN KEY (rarity_config_id) REFERENCES rarity_configs (id);
+
+ALTER TABLE collection_items
+  ADD CONSTRAINT fk_collection_items_item_id FOREIGN KEY (item_id) REFERENCES items (id) ON DELETE CASCADE;

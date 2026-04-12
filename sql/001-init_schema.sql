@@ -58,6 +58,10 @@ CREATE TRIGGER trigger_sessions_updated_at
 
 CREATE INDEX IF NOT EXISTS idx_sessions_by_user_id ON sessions (user_id) WHERE (deleted_at IS NULL);
 
+ALTER TABLE sessions
+  ADD CONSTRAINT fk_sessions_user_id
+  FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE;
+
 CREATE TABLE jobs
 (
   id           UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
