@@ -14,6 +14,7 @@ type Collection struct {
 
 	ID             uuid.UUID            `bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
 	Name           string               `bun:"name,notnull"`
+	Slug           string               `bun:"slug,notnull"`
 	Description    *string              `bun:"description"`
 	Type           collectionconst.Type `bun:"collection_type,notnull"`
 	RewardAmount   int64                `bun:"reward_amount,notnull,default:0"`

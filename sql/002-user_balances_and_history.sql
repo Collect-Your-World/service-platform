@@ -18,6 +18,13 @@ CREATE INDEX idx_user_balances_by_user_id ON user_balances USING btree (user_id)
 WHERE
     deleted_at IS NULL;
 
+CREATE UNIQUE INDEX unique_idx_user_balances_user_currency ON user_balances (user_id, currency)
+WHERE
+    deleted_at IS NULL;
+
+ALTER TABLE user_balances
+    ADD CONSTRAINT fk_user_balances_user_id FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE;
+
 -- Table user_balance_transactions
 CREATE TABLE
     user_balance_transactions (
@@ -28,6 +35,9 @@ CREATE TABLE
         type VARCHAR(50) NOT NULL, -- e.g. DAILY_REWARD, AD_WATCH, PURCHASE, SPIN_USE, etc.
         source VARCHAR(50) NOT NULL, -- e.g. 'DAILY_LOGIN', 'VIDEO_AD', 'STORE_PURCHASE'
         status VARCHAR(20) NOT NULL, -- "PENDING", "COMPLETED", "FAILED", etc.
+        metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+        balance_before BIGINT NOT NULL DEFAULT 0,
+        balance_after BIGINT NOT NULL DEFAULT 0,
         -- audit & lifecycle
         created_at TIMESTAMPTZ NOT NULL DEFAULT now (),
         updated_at TIMESTAMPTZ,
@@ -52,3 +62,6 @@ WHERE
 CREATE INDEX idx_user_balance_transactions_by_user_id_and_currency_and_type ON user_balance_transactions USING btree (user_id, currency, type)
 WHERE
     deleted_at IS NULL;
+
+ALTER TABLE user_balance_transactions
+    ADD CONSTRAINT fk_user_balance_transactions_user_id FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE;
